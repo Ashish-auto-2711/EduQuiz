@@ -1,0 +1,11 @@
+node_modules/
+.insforge/
+.agents/
+.gitignore.bak
+repair_shuffle_answers.js
+seed_insforge_db.js
+seed_class12_numericals.js
+seed_classes_9_10_11.js
+skills-lock.json
+package-lock.json
+*.log
