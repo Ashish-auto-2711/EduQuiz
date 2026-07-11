@@ -7,9 +7,9 @@
 
 /* ─── 0. InsForge / Database Config ──────────────────────────── */
 const DB_CONFIG = {
-  baseUrl: 'https://api.insforge.com',
+  baseUrl: 'https://c43du8wy.us-east.insforge.app',
   projectId: 'quiz_app',
-  apiKey: 'public_anon_key'
+  apiKey: 'anon_61ab7eb0294a9648862366b8f8304a46b8fc7bdb08db307e9ef9c1b014768351'
 };
 
 /* ─── 1. Constants / Helpers ──────────────────────────────────── */
@@ -366,13 +366,9 @@ function generateSampleQuestions(classLabel, subject, chapter) {
   const bankKey = Object.keys(banks).find(k => key.includes(k.replace(/\s+/g,'_')));
   if (bankKey) return banks[bankKey];
 
-  // Generic fallback
-  return Array.from({length:10}, (_,i) => ({
-    question: `Sample question ${i+1} for ${chapter}. What is the correct answer?`,
-    option_a: 'Option A (correct)', option_b: 'Option B', option_c: 'Option C', option_d: 'Option D',
-    correct_option: 'A', difficulty: ['easy','moderate','hard','neet'][i%4],
-    explanation: `This is the explanation for question ${i+1} of ${chapter}.`
-  }));
+  // No dummy fallback — return empty array so the UI shows a proper message
+  console.warn(`No local questions found for: ${classLabel} > ${subject} > ${chapter}`);
+  return [];
 }
 
 /* ─── 9. Home / Navigation Rendering ─────────────────────────── */
@@ -845,27 +841,12 @@ function selectOption(optIndex, btn, e) {
   btn.appendChild(ripple);
   setTimeout(() => ripple.remove(), 600);
 
-  const q = state.selectedQuestions[state.currentQIndex];
-  const correctIndex = q._correctIndex ?? ['A','B','C','D'].indexOf((q.correct_option||'A').toUpperCase());
-
   state.answers[state.currentQIndex] = optIndex;
 
-  if (state.quizConfig.mode === 'practice') {
-    // Instant feedback
-    const allBtns = document.querySelectorAll('.option-btn');
-    allBtns.forEach((b, i) => {
-      b.style.pointerEvents = 'none';
-      if (i === correctIndex) { b.classList.add('correct'); }
-      else if (i === optIndex && optIndex !== correctIndex) { b.classList.add('wrong'); }
-    });
-
-    if (optIndex === correctIndex) { sound.correct(); if (navigator.vibrate) navigator.vibrate(50); }
-    else                           { sound.wrong();   if (navigator.vibrate) navigator.vibrate([50,50,50]); }
-  } else {
-    // Just mark selected
-    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-  }
+  // NEVER reveal correct/wrong during the quiz — only mark as selected
+  // Results are shown ONLY on the final results screen
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
 
   updateDotTracker(state.currentQIndex);
   saveInProgress();
