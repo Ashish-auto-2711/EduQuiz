@@ -1,15 +1,18 @@
-// ==========================================
-// EduQuiz — Premium Static SPA Javascript
-// ==========================================
+import { createClient } from 'https://esm.sh/@insforge/sdk@1.4.4';
 
 const INSFORGE_URL = 'https://c43du8wy.us-east.insforge.app/api/database/records';
 const INSFORGE_KEY = 'anon_61ab7eb0294a9648862366b8f8304a46b8fc7bdb08db307e9ef9c1b014768351';
 
+const insforge = createClient({
+  baseUrl: 'https://c43du8wy.us-east.insforge.app',
+  anonKey: INSFORGE_KEY
+});
+
 // Admin emails — these always get SUPER_ADMIN role
 const ADMIN_EMAILS = ['ak0002711@gmail.com'];
 
-// Google OAuth Client ID — replace with your actual Google Cloud Console Client ID
-const GOOGLE_CLIENT_ID = '464498574063-t5n73vdl5rg9vv0if8d6l99n8jqbskrh.apps.googleusercontent.com';
+// Token state
+let accessToken = null;
 
 // Global State
 let currentUser = null;
@@ -122,7 +125,7 @@ async function hashPassword(password) {
 async function dbRequest(endpoint, options = {}) {
   const headers = {
     'apikey': INSFORGE_KEY,
-    'Authorization': `Bearer ${INSFORGE_KEY}`,
+    'Authorization': accessToken ? `Bearer ${accessToken}` : `Bearer ${INSFORGE_KEY}`,
     'Content-Type': 'application/json',
     ...options.headers
   };
@@ -202,15 +205,62 @@ function handleRouting() {
 }
 
 // Initialize Auth Session
-function initAuth() {
-  const session = localStorage.getItem('userSession');
-  if (session) {
-    currentUser = JSON.parse(session);
-    // Auto-onboard check
-    if (!currentUser.username) {
-      document.getElementById('onboard-modal').classList.remove('hidden');
+async function initAuth() {
+  try {
+    // Check URL parameters for reset password redirect from InsForge
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('insforge_status') === 'ready' && params.get('insforge_type') === 'reset_password') {
+      const token = params.get('token');
+      const email = params.get('email');
+      openResetPasswordModal(token, email);
     }
+
+    const { data, error } = await insforge.auth.getCurrentUser();
+    if (data && data.user) {
+      const authUser = data.user;
+      accessToken = data.accessToken || null;
+      
+      // Fetch public profile
+      const users = await dbRequest(`users?id=eq.${authUser.id}`);
+      if (users && users.length > 0) {
+        currentUser = users[0];
+        if (ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
+          currentUser.role = 'SUPER_ADMIN';
+        }
+      } else {
+        // Create public profile if it doesn't exist
+        const isAdmin = ADMIN_EMAILS.includes(authUser.email.toLowerCase());
+        const name = authUser.name || authUser.email.split('@')[0];
+        const resp = await dbRequest('users', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=representation' },
+          body: JSON.stringify([{
+            id: authUser.id,
+            name: name,
+            email: authUser.email,
+            role: isAdmin ? 'SUPER_ADMIN' : 'USER',
+            coins: isAdmin ? 9999 : 100,
+            favorite_subjects: []
+          }])
+        });
+        currentUser = resp[0];
+      }
+      
+      localStorage.setItem('userSession', JSON.stringify(currentUser));
+      if (!currentUser.username) {
+        document.getElementById('onboard-modal').classList.remove('hidden');
+      }
+    } else {
+      currentUser = null;
+      accessToken = null;
+      localStorage.removeItem('userSession');
+    }
+  } catch (err) {
+    console.error('Session restoration failed:', err);
+    currentUser = null;
+    accessToken = null;
   }
+  updateNavbar();
 }
 
 // Update navbar elements
@@ -1001,37 +1051,43 @@ document.getElementById('signup-form').onsubmit = async (e) => {
   const password = document.getElementById('signup-password').value;
 
   if (password.length < 6) {
-    showToast('Failed to Register', 'Password must be at least 6 characters.', '🔒');
+    alert('Password must be at least 6 characters.');
     return;
   }
 
   try {
-    const hash = await hashPassword(password);
-    
-    // Check if user exists
-    const checkUser = await dbRequest(`users?email=eq.${encodeURIComponent(email)}`);
-    if (checkUser.length > 0) {
-      showToast('Failed to Register', 'Email address is already in use.', '⚠️');
+    const { data, error } = await insforge.auth.signUp({
+      email,
+      password,
+      name
+    });
+
+    if (error) {
+      alert(`Registration failed: ${error.message}`);
       return;
     }
 
+    const authUser = data.user;
     const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
-    const newUser = await dbRequest('users', {
+
+    // Create record in public.users table linked to authUser.id
+    await dbRequest('users', {
       method: 'POST',
-      headers: { 'Prefer': 'return=representation' },
       body: JSON.stringify([{
+        id: authUser.id,
         name,
         email,
-        password_hash: hash,
         role: isAdmin ? 'SUPER_ADMIN' : 'USER',
         coins: isAdmin ? 9999 : 100,
         favorite_subjects: []
       }])
     });
 
+    alert('Registration successful! Please login.');
     window.location.hash = '#login';
   } catch (err) {
     console.error('Signup error:', err);
+    alert('Registration failed. Please try again.');
   }
 };
 
@@ -1042,130 +1098,140 @@ document.getElementById('login-form').onsubmit = async (e) => {
   const password = document.getElementById('login-password').value;
 
   try {
-    const hash = await hashPassword(password);
-    const users = await dbRequest(`users?email=eq.${encodeURIComponent(email)}`);
-    
-    if (!users.length || users[0].password_hash !== hash) {
-      showToast('Failed to Sign In', 'Incorrect email address or password.', '⚠️');
+    const { data, error } = await insforge.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      alert(`Login failed: ${error.message || 'Incorrect email or password'}`);
       return;
     }
 
-    currentUser = users[0];
-
-    // Force SUPER_ADMIN for known admin emails even if DB role differs
-    if (ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
-      currentUser.role = 'SUPER_ADMIN';
-    }
-
-    localStorage.setItem('userSession', JSON.stringify(currentUser));
-    updateNavbar();
-
-    if (!currentUser.username) {
-      document.getElementById('onboard-modal').classList.remove('hidden');
-    } else {
-      window.location.hash = '#dashboard';
-    }
-  } catch (err) {
-    console.error('Login error:', err);
-  }
-};
-
-// Google Identity Services (GSI) — Real OAuth Login
-async function handleGoogleCredential(response) {
-  try {
-    // Decode the JWT credential from Google
-    const base64Url = response.credential.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64));
-
-    const email = payload.email;
-    const name = payload.name || email.split('@')[0];
-    const picture = payload.picture || '';
-    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
-
-    // Find or create user in DB
-    let userList = await dbRequest(`users?email=eq.${encodeURIComponent(email)}`);
-    let user;
-
-    if (userList.length > 0) {
-      user = userList[0];
-      // Always enforce admin role if in ADMIN_EMAILS
-      if (isAdmin && user.role !== 'SUPER_ADMIN') {
-        await dbRequest(`users?id=eq.${user.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ role: 'SUPER_ADMIN', coins: 9999 })
-        });
-        user.role = 'SUPER_ADMIN';
+    const authUser = data.user;
+    accessToken = data.accessToken;
+    
+    // Fetch details from users table
+    const users = await dbRequest(`users?id=eq.${authUser.id}`);
+    if (users && users.length > 0) {
+      currentUser = users[0];
+      if (ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
+        currentUser.role = 'SUPER_ADMIN';
       }
     } else {
+      // Fallback: create public profile if missing
+      const isAdmin = ADMIN_EMAILS.includes(authUser.email.toLowerCase());
+      const name = authUser.name || authUser.email.split('@')[0];
       const resp = await dbRequest('users', {
         method: 'POST',
         headers: { 'Prefer': 'return=representation' },
         body: JSON.stringify([{
-          name,
-          email,
-          avatar: picture,
+          id: authUser.id,
+          name: name,
+          email: authUser.email,
           role: isAdmin ? 'SUPER_ADMIN' : 'USER',
-          coins: isAdmin ? 9999 : 150,
+          coins: isAdmin ? 9999 : 100,
           favorite_subjects: []
         }])
       });
-      user = resp[0];
+      currentUser = resp[0];
     }
 
-    currentUser = user;
-    if (isAdmin) currentUser.role = 'SUPER_ADMIN';
     localStorage.setItem('userSession', JSON.stringify(currentUser));
     updateNavbar();
 
     if (!currentUser.username) {
       document.getElementById('onboard-modal').classList.remove('hidden');
     } else {
-      window.location.hash = isAdmin ? '#admin' : '#dashboard';
+      window.location.hash = currentUser.role === 'SUPER_ADMIN' ? '#admin' : '#dashboard';
     }
   } catch (err) {
-    console.error('Google auth error:', err);
+    console.error('Login error:', err);
+    alert('An error occurred during login. Please try again.');
   }
-}
-
-// Initialize Google GSI on page load
-function initGoogleSignIn() {
-  if (typeof google === 'undefined') return;
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleGoogleCredential,
-    auto_select: false,
-    cancel_on_tap_outside: true
-  });
-}
-
-// Google login button click — shows Google One Tap popup
-document.getElementById('google-login-btn').onclick = () => {
-  if (typeof google === 'undefined') {
-    alert('Google Sign-In failed to load. Please check your internet connection and try again.');
-    return;
-  }
-  google.accounts.id.prompt((notification) => {
-    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-      // Fallback: render button in a popup overlay
-      const overlay = document.createElement('div');
-      overlay.className = 'fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4';
-      overlay.innerHTML = `
-        <div class="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-xs text-center space-y-4">
-          <h3 class="font-bold text-slate-800 text-lg">Sign in with Google</h3>
-          <p class="text-slate-500 text-xs">Click below to continue with your Google account.</p>
-          <div id="gsi-btn-container" class="flex justify-center"></div>
-          <button onclick="this.closest('.fixed').remove()" class="text-xs text-slate-400 hover:text-slate-600">Cancel</button>
-        </div>
-      `;
-      document.body.appendChild(overlay);
-      google.accounts.id.renderButton(
-        document.getElementById('gsi-btn-container'),
-        { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', width: 240 }
-      );
-    }
-  });
 };
+
+// Real Google OAuth redirect via InsForge Auth
+document.getElementById('google-login-btn').onclick = async () => {
+  try {
+    const { data, error } = await insforge.auth.signInWithOAuth('google', {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) {
+      alert(`Google Sign-In failed: ${error.message}`);
+    }
+  } catch (err) {
+    console.error('Google OAuth init error:', err);
+  }
+};
+
+// Forgot Password execution
+document.getElementById('forgot-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('forgot-email').value;
+
+  try {
+    const { error } = await insforge.auth.sendResetPasswordEmail({
+      email,
+      redirectTo: window.location.origin + window.location.pathname
+    });
+
+    if (error) {
+      alert(`Error sending reset link: ${error.message}`);
+    } else {
+      alert('Password reset instructions have been sent to your email.');
+      window.location.hash = '#login';
+    }
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    alert('Failed to send reset email.');
+  }
+};
+
+// Dynamic reset password modal popup
+function openResetPasswordModal(token, email) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4';
+  overlay.innerHTML = `
+    <div class="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-md space-y-6 border border-slate-200">
+      <div class="text-center">
+        <h3 class="font-bold text-slate-900 text-lg">Create New Password</h3>
+        <p class="text-slate-500 text-xs mt-1">Please enter your new password below.</p>
+      </div>
+      <form id="reset-password-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">New Password</label>
+          <input type="password" id="reset-new-password" required minlength="6" class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="Minimum 6 characters">
+        </div>
+        <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-100">Reset Password</button>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#reset-password-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const newPassword = overlay.querySelector('#reset-new-password').value;
+    try {
+      const { error } = await insforge.auth.resetPassword({
+        newPassword,
+        otp: token
+      });
+      if (error) {
+        alert(`Failed to reset password: ${error.message}`);
+      } else {
+        alert('Password has been reset successfully! Please sign in with your new password.');
+        overlay.remove();
+        // Clean URL parameter search queries
+        window.history.replaceState({}, document.title, window.location.pathname);
+        window.location.hash = '#login';
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred. Please try again.');
+    }
+  };
+}
 
 // Onboarding submission
 document.getElementById('onboard-form').onsubmit = async (e) => {
@@ -1488,8 +1554,14 @@ document.getElementById('mobile-menu-btn').onclick = () => {
       <a href="#dashboard" class="text-lg font-bold text-indigo-400">Dashboard</a>
       <button id="mobile-logout-btn" class="w-full text-left text-lg font-bold text-red-400">Sign Out</button>
     `;
-    authDiv.querySelector('#mobile-logout-btn').onclick = () => {
+    authDiv.querySelector('#mobile-logout-btn').onclick = async () => {
+      try {
+        await insforge.auth.signOut();
+      } catch (e) {
+        console.error(e);
+      }
       currentUser = null;
+      accessToken = null;
       localStorage.removeItem('userSession');
       updateNavbar();
       window.location.hash = '#home';
@@ -1501,6 +1573,23 @@ document.getElementById('mobile-menu-btn').onclick = () => {
     `;
   }
 };
+
+// Desktop dashboard logout action
+const dashLogoutBtn = document.getElementById('dashboard-logout-btn');
+if (dashLogoutBtn) {
+  dashLogoutBtn.onclick = async () => {
+    try {
+      await insforge.auth.signOut();
+    } catch (e) {
+      console.error(e);
+    }
+    currentUser = null;
+    accessToken = null;
+    localStorage.removeItem('userSession');
+    updateNavbar();
+    window.location.hash = '#home';
+  };
+}
 
 // Initial setup
 window.onhashchange = handleRouting;

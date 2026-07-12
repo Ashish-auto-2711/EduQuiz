@@ -651,6 +651,7 @@
         <div class="flex items-center gap-3 mt-4 sm:mt-0">
           <a href="#home" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-100">Take A Quiz</a>
           <button id="dashboard-edit-profile" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs">Edit Profile</button>
+          <button id="dashboard-logout-btn" class="px-5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold text-xs transition-colors">Sign Out</button>
         </div>
       </div>
 
@@ -874,8 +875,6 @@
 
   </main>
 
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
