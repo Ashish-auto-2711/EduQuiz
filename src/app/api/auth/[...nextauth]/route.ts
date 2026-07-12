@@ -77,9 +77,10 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Attach custom properties to the user object for JWT callback
-        user.id = existingUser.id;
-        user.role = existingUser.role;
-        user.username = existingUser.username || undefined;
+        const u = user as any;
+        u.id = existingUser.id;
+        u.role = existingUser.role;
+        u.username = existingUser.username || undefined;
       }
       return true;
     },
