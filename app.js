@@ -1018,37 +1018,93 @@ async function loadFullLeaderboard() {
   const container = document.getElementById('full-leaderboard-list');
   container.innerHTML = '<div class="p-8 text-center text-xs text-slate-500">Loading top ranks...</div>';
 
+  // Reset and hide podium items initially
+  const p1 = document.getElementById('podium-rank-1');
+  const p2 = document.getElementById('podium-rank-2');
+  const p3 = document.getElementById('podium-rank-3');
+  const b1 = document.getElementById('podium-bar-1');
+  const b2 = document.getElementById('podium-bar-2');
+  const b3 = document.getElementById('podium-bar-3');
+
+  if (p1) p1.classList.add('hidden');
+  if (p2) p2.classList.add('hidden');
+  if (p3) p3.classList.add('hidden');
+  if (b1) b1.style.height = '0px';
+  if (b2) b2.style.height = '0px';
+  if (b3) b3.style.height = '0px';
+
   try {
-    const users = await dbRequest('users?order=xp.desc&limit=50');
+    const users = await dbRequest('users?order=xp.desc&limit=100');
     container.innerHTML = '';
 
     if (!users.length) {
-      container.innerHTML = '<div class="p-8 text-center text-xs text-slate-500">No leaderboard logs recorded.</div>';
+      container.innerHTML = '<div class="p-8 text-center text-xs text-slate-500">No leaderboard logs recorded yet. Be the first to take a quiz!</div>';
       return;
     }
 
-    users.forEach((u, idx) => {
-      const isTop3 = idx < 3;
-      const badge = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
+    // Populate Podium 1st, 2nd, 3rd
+    if (users[0] && p1 && b1) {
+      const u = users[0];
+      document.getElementById('podium-name-1').innerText = u.name || u.username || 'Student';
+      document.getElementById('podium-score-1').innerText = `${u.xp || 0} ⭐`;
+      document.getElementById('podium-avatar-1').innerText = u.avatar || '🧑‍🎓';
+      p1.classList.remove('hidden');
+      setTimeout(() => {
+        b1.style.height = '150px';
+      }, 50);
+    }
+    
+    if (users[1] && p2 && b2) {
+      const u = users[1];
+      document.getElementById('podium-name-2').innerText = u.name || u.username || 'Student';
+      document.getElementById('podium-score-2').innerText = `${u.xp || 0} ⭐`;
+      document.getElementById('podium-avatar-2').innerText = u.avatar || '🧑‍🎓';
+      p2.classList.remove('hidden');
+      setTimeout(() => {
+        b2.style.height = '110px';
+      }, 100);
+    }
+
+    if (users[2] && p3 && b3) {
+      const u = users[2];
+      document.getElementById('podium-name-3').innerText = u.name || u.username || 'Student';
+      document.getElementById('podium-score-3').innerText = `${u.xp || 0} ⭐`;
+      document.getElementById('podium-avatar-3').innerText = u.avatar || '🧑‍🎓';
+      p3.classList.remove('hidden');
+      setTimeout(() => {
+        b3.style.height = '80px';
+      }, 150);
+    }
+
+    // Render list for rank 4 and below
+    const restUsers = users.slice(3);
+    if (restUsers.length === 0) {
+      container.innerHTML = '<div class="p-6 text-center text-xs text-slate-400 italic">No other users registered. Invite your friends!</div>';
+      return;
+    }
+
+    restUsers.forEach((u, idx) => {
+      const rank = idx + 4;
       const div = document.createElement('div');
-      div.className = 'flex items-center justify-between p-5 hover:bg-indigo-50 transition-colors';
+      div.className = 'flex items-center justify-between p-4 hover:bg-slate-50 transition-colors';
       div.innerHTML = `
         <div class="flex items-center gap-4">
-          <span class="w-6 text-center text-sm font-extrabold ${idx < 3 ? 'text-lg' : 'text-slate-400'}">${badge ? badge : idx + 1}</span>
-          <span class="w-9 h-9 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-sm font-bold text-indigo-700">${(u.name || u.username || 'U')[0].toUpperCase()}</span>
+          <span class="w-6 text-center text-xs font-extrabold text-slate-400">#${rank}</span>
+          <span class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-700">${u.avatar || '🧑‍🎓'}</span>
           <div>
             <p class="text-sm font-bold text-slate-800">${u.name || u.username}</p>
             <p class="text-[10px] text-slate-400">Level: ${u.level || 'Bronze'}</p>
           </div>
         </div>
         <div class="text-right">
-          <span class="text-sm font-black text-indigo-600">${u.xp || 0} XP</span>
+          <span class="text-sm font-black text-slate-700">${u.xp || 0} ⭐</span>
         </div>
       `;
       container.appendChild(div);
     });
 
   } catch (err) {
+    console.error(err);
     container.innerHTML = '<div class="p-8 text-center text-xs text-red-400">Failed to retrieve leaderboards.</div>';
   }
 }
@@ -1555,14 +1611,15 @@ const adminTabs = document.querySelectorAll('.admin-tab-btn');
 adminTabs.forEach(tab => {
   tab.onclick = () => {
     adminTabs.forEach(t => {
-      t.classList.remove('active', 'text-indigo-400', 'border-b-2', 'border-indigo-500');
-      t.classList.add('text-slate-400');
+      t.className = 'admin-tab-btn pb-3 px-4 text-sm font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-700';
     });
-    tab.classList.add('active', 'text-indigo-400', 'border-b-2', 'border-indigo-500');
-    tab.classList.remove('text-slate-400');
+    tab.className = 'admin-tab-btn pb-3 px-4 text-sm font-bold text-indigo-600 border-b-2 border-indigo-600';
 
-    document.querySelectorAll('.admin-content-section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(`admin-tab-${tab.getAttribute('data-tab')}`).classList.remove('hidden');
+    document.querySelectorAll('.admin-panel').forEach(s => s.classList.add('hidden'));
+    const activePanel = document.getElementById(`admin-tab-${tab.getAttribute('data-tab')}`);
+    if (activePanel) {
+      activePanel.classList.remove('hidden');
+    }
   };
 });
 
@@ -1705,8 +1762,8 @@ document.getElementById('mobile-menu-btn').onclick = () => {
   const authDiv = document.getElementById('mobile-menu-auth');
   if (currentUser) {
     authDiv.innerHTML = `
-      <a href="#dashboard" class="text-lg font-bold text-indigo-400">Dashboard</a>
-      <button id="mobile-logout-btn" class="w-full text-left text-lg font-bold text-red-400">Sign Out</button>
+      <a href="#dashboard" class="block text-center py-2.5 text-base font-semibold text-slate-700 hover:text-indigo-600 transition-colors">Dashboard</a>
+      <button id="mobile-logout-btn" class="w-full text-center py-2.5 bg-red-50 hover:bg-red-100 text-red-650 font-bold rounded-xl text-sm transition-all mt-2">Sign Out</button>
     `;
     authDiv.querySelector('#mobile-logout-btn').onclick = async () => {
       try {
@@ -1722,8 +1779,8 @@ document.getElementById('mobile-menu-btn').onclick = () => {
     };
   } else {
     authDiv.innerHTML = `
-      <a href="#login" class="text-lg font-bold text-slate-350 hover:text-white">Login</a>
-      <a href="#signup" class="text-lg font-bold text-white bg-indigo-600 py-2.5 text-center rounded-xl">Sign Up</a>
+      <a href="#login" class="block text-center py-2.5 text-base font-semibold text-slate-700 hover:text-indigo-600 transition-colors">Login</a>
+      <a href="#signup" class="block text-center py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all">Sign Up</a>
     `;
   }
 };
@@ -1745,6 +1802,61 @@ if (dashLogoutBtn) {
   };
 }
 
+// Quick Stats Count-up Animations
+function animateStats() {
+  const statsElements = [
+    { id: 'stat-users', target: 50, suffix: 'K+' },
+    { id: 'stat-quizzes', target: 120, suffix: 'K+' },
+    { id: 'stat-questions', target: 1.5, suffix: 'M+', decimal: true },
+    { id: 'stat-chapters', target: 100, suffix: '+' }
+  ];
+
+  statsElements.forEach(stat => {
+    const el = document.getElementById(stat.id);
+    if (!el) return;
+
+    let start = 0;
+    const duration = 2000; // 2 seconds
+    const startTime = performance.now();
+
+    function updateCount(timestamp) {
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Easing: easeOutQuad
+      const easedProgress = progress * (2 - progress);
+      const currentVal = start + easedProgress * (stat.target - start);
+
+      if (stat.decimal) {
+        el.innerText = currentVal.toFixed(1) + stat.suffix;
+      } else {
+        el.innerText = Math.floor(currentVal) + stat.suffix;
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(updateCount);
+      }
+    }
+    requestAnimationFrame(updateCount);
+  });
+}
+
+function setupStatsObserver() {
+  const statsSection = document.getElementById('stats-bar-section');
+  if (!statsSection) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateStats();
+        observer.unobserve(statsSection);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  observer.observe(statsSection);
+}
+
 // Initial setup
 window.onhashchange = handleRouting;
 window.onload = async () => {
@@ -1752,6 +1864,7 @@ window.onload = async () => {
   handleRouting();
   loadFaqAccordion();
   runHeroSimulator();
+  setupStatsObserver();
   
   // Initialize Lucide Icons
   lucide.createIcons();
