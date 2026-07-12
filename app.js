@@ -364,11 +364,11 @@ async function loadCategories(grade) {
 async function loadCategoriesView() {
   // Parse query params to see if a class was pre-selected (e.g. #categories?class=12)
   const hash = window.location.hash;
-  const match = hash.match(/\?class=(\d+)/);
-  const preSelectedClass = match ? parseInt(match[1]) : null;
+  const match = hash.match(/\?class=([a-zA-Z0-9_-]+)/);
+  const preSelectedClass = match ? (isNaN(match[1]) ? match[1] : parseInt(match[1])) : null;
 
   // Render or highlight active class
-  if (preSelectedClass) {
+  if (preSelectedClass !== null) {
     selectClassForBrowse(preSelectedClass);
   } else {
     // If no preselected class, hide subjects and chapters showcase
@@ -376,7 +376,7 @@ async function loadCategoriesView() {
     document.getElementById('browse-chapters-section').classList.add('hidden');
     
     // Reset all class card styling
-    ['1-5', '6-8', 9, 10, 11, 12, 'JEE', 'NEET', 'Govt', 'GK'].forEach(g => {
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 'JEE', 'NEET', 'Govt', 'GK'].forEach(g => {
       const card = document.getElementById(`class-browse-${g}`);
       if (card) {
         card.className = 'card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all border-slate-200';
@@ -388,7 +388,7 @@ async function loadCategoriesView() {
 // Global functions exposed to window since they are referenced in HTML onclick attributes
 window.selectClassForBrowse = async function(grade) {
   // Highlight chosen class card
-  ['1-5', '6-8', 9, 10, 11, 12, 'JEE', 'NEET', 'Govt', 'GK'].forEach(g => {
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 'JEE', 'NEET', 'Govt', 'GK'].forEach(g => {
     const card = document.getElementById(`class-browse-${g}`);
     if (!card) return;
     if (g === grade) {
@@ -417,17 +417,25 @@ window.selectClassForBrowse = async function(grade) {
 
   try {
     let subjects = [];
-    if (grade === '1-5') {
+    if (grade === 1 || grade === 2) {
       subjects = [
-        { id: 'mock-sub-1-5-math', name: 'General Mathematics (Class 1-5)', isMock: true },
-        { id: 'mock-sub-1-5-sci', name: 'Science & Nature (Class 1-5)', isMock: true },
-        { id: 'mock-sub-1-5-eng', name: 'English Vocabulary (Class 1-5)', isMock: true }
+        { id: `mock-sub-${grade}-math`, name: `Mathematics (Class ${grade})`, isMock: true },
+        { id: `mock-sub-${grade}-eng`, name: `English Grammar (Class ${grade})`, isMock: true },
+        { id: `mock-sub-${grade}-evs`, name: `Environmental Studies (Class ${grade})`, isMock: true }
       ];
-    } else if (grade === '6-8') {
+    } else if (grade >= 3 && grade <= 5) {
       subjects = [
-        { id: 'mock-sub-6-8-math', name: 'Mathematics (Class 6-8)', isMock: true },
-        { id: 'mock-sub-6-8-sci', name: 'General Science (Class 6-8)', isMock: true },
-        { id: 'mock-sub-6-8-ss', name: 'Social Science (Class 6-8)', isMock: true }
+        { id: `mock-sub-${grade}-math`, name: `Mathematics (Class ${grade})`, isMock: true },
+        { id: `mock-sub-${grade}-sci`, name: `General Science (Class ${grade})`, isMock: true },
+        { id: `mock-sub-${grade}-ss`, name: `Social Studies (Class ${grade})`, isMock: true },
+        { id: `mock-sub-${grade}-eng`, name: `English Grammar (Class ${grade})`, isMock: true }
+      ];
+    } else if (grade >= 6 && grade <= 8) {
+      subjects = [
+        { id: `mock-sub-${grade}-math`, name: `Mathematics (Class ${grade})`, isMock: true },
+        { id: `mock-sub-${grade}-sci`, name: `Science (Class ${grade})`, isMock: true },
+        { id: `mock-sub-${grade}-ss`, name: `Social Science (Class ${grade})`, isMock: true },
+        { id: `mock-sub-${grade}-eng`, name: `English (Class ${grade})`, isMock: true }
       ];
     } else if (grade === 'Govt') {
       subjects = [
@@ -442,20 +450,9 @@ window.selectClassForBrowse = async function(grade) {
         { id: 'mock-sub-gk-curr', name: 'Current Affairs (GK)', isMock: true }
       ];
     } else {
-      // Fetch from database
+      // Fetch Class 9, 10, 11, 12 or JEE, NEET from database
       const allSubjects = await dbRequest('subjects?limit=100');
-      if (grade === 12) {
-        // Class 12 board subjects (we filter by name or fallback to standard ones)
-        subjects = allSubjects.filter(s => s.name.includes('Class 12') || s.name.includes('Class 12'));
-        if (!subjects.length) {
-          // Fallback mocks if seeder hasn't populated Class 12 yet
-          subjects = [
-            { id: 'mock-sub-12-math', name: 'Mathematics (Class 12)', isMock: true },
-            { id: 'mock-sub-12-phys', name: 'Physics (Class 12)', isMock: true },
-            { id: 'mock-sub-12-chem', name: 'Chemistry (Class 12)', isMock: true }
-          ];
-        }
-      } else if (grade === 'JEE') {
+      if (grade === 'JEE') {
         subjects = allSubjects.filter(s => (s.name.includes('Class 11') || s.name.includes('Class 12')) && (s.name.includes('Physics') || s.name.includes('Chemistry') || s.name.includes('Mathematics')));
         if (!subjects.length) {
           subjects = [
@@ -475,6 +472,15 @@ window.selectClassForBrowse = async function(grade) {
         }
       } else {
         subjects = allSubjects.filter(s => s.name.includes(`Class ${grade}`));
+        if (!subjects.length) {
+          // Fallback mock subjects for these classes
+          subjects = [
+            { id: `mock-sub-${grade}-math`, name: `Mathematics (Class ${grade})`, isMock: true },
+            { id: `mock-sub-${grade}-phys`, name: `Physics (Class ${grade})`, isMock: true },
+            { id: `mock-sub-${grade}-chem`, name: `Chemistry (Class ${grade})`, isMock: true },
+            { id: `mock-sub-${grade}-bio`, name: `Biology (Class ${grade})`, isMock: true }
+          ];
+        }
       }
     }
 
@@ -538,76 +544,65 @@ window.selectSubjectForBrowse = async function(subject, grade) {
   try {
     let chapters = [];
     if (subject.isMock) {
-      if (subject.id === 'mock-sub-1-5-math') {
+      const subId = subject.id;
+      if (subId.endsWith('-math')) {
         chapters = [
-          { id: 'mock-chap-1', name: 'Addition & Subtraction', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-2', name: 'Multiplication Tables', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-3', name: 'Basic Shapes & Geometry', subject_id: subject.id, isMock: true }
+          { id: subId + '-chap-1', name: 'Foundational Numbers & Logic', subject_id: subId, isMock: true },
+          { id: subId + '-chap-2', name: 'Basic Operations & Arithmetic', subject_id: subId, isMock: true },
+          { id: subId + '-chap-3', name: 'Practice Test Problems', subject_id: subId, isMock: true }
         ];
-      } else if (subject.id === 'mock-sub-1-5-sci') {
+      } else if (subId.endsWith('-sci') || subId.endsWith('-evs') || subId.endsWith('-phys') || subId.endsWith('-chem') || subId.endsWith('-bio')) {
         chapters = [
-          { id: 'mock-chap-4', name: 'Our Five Senses', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-5', name: 'Plants & Animals', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-6', name: 'Weather & Seasons', subject_id: subject.id, isMock: true }
+          { id: subId + '-chap-1', name: 'Introduction to Core Concepts', subject_id: subId, isMock: true },
+          { id: subId + '-chap-2', name: 'Experimental Observation Exercises', subject_id: subId, isMock: true },
+          { id: subId + '-chap-3', name: 'High-Yield Board Questions', subject_id: subId, isMock: true }
         ];
-      } else if (subject.id === 'mock-sub-1-5-eng') {
+      } else if (subId.endsWith('-ss') || subId.endsWith('-social')) {
         chapters = [
-          { id: 'mock-chap-7', name: 'Nouns & Pronouns', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-8', name: 'Spelling Bee Practice', subject_id: subject.id, isMock: true }
+          { id: subId + '-chap-1', name: 'Historical Overview & Timeline', subject_id: subId, isMock: true },
+          { id: subId + '-chap-2', name: 'Geography & Local Environments', subject_id: subId, isMock: true }
         ];
-      } else if (subject.id === 'mock-sub-6-8-math') {
+      } else if (subId.endsWith('-eng')) {
         chapters = [
-          { id: 'mock-chap-9', name: 'Fractions & Decimals', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-10', name: 'Simple Equations', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-11', name: 'Comparing Quantities', subject_id: subject.id, isMock: true }
+          { id: subId + '-chap-1', name: 'Nouns, Verbs & Grammar Rules', subject_id: subId, isMock: true },
+          { id: subId + '-chap-2', name: 'Reading Comprehension Drills', subject_id: subId, isMock: true }
         ];
-      } else if (subject.id === 'mock-sub-6-8-sci') {
+      } else if (subId.includes('govt-apt')) {
         chapters = [
-          { id: 'mock-chap-12', name: 'Nutrition in Plants', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-13', name: 'Fibre to Fabric', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-14', name: 'Heat & Temperature', subject_id: subject.id, isMock: true }
+          { id: 'mock-chap-17', name: 'Percentage & Average', subject_id: subId, isMock: true },
+          { id: 'mock-chap-18', name: 'Time and Work', subject_id: subId, isMock: true },
+          { id: 'mock-chap-19', name: 'Profit and Loss', subject_id: subId, isMock: true }
         ];
-      } else if (subject.id === 'mock-sub-6-8-ss') {
+      } else if (subId.includes('govt-reason')) {
         chapters = [
-          { id: 'mock-chap-15', name: 'Tracing Changes Through 1000 Years', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-16', name: 'Our Environment', subject_id: subject.id, isMock: true }
+          { id: 'mock-chap-20', name: 'Number Series & Coding', subject_id: subId, isMock: true },
+          { id: 'mock-chap-21', name: 'Blood Relations', subject_id: subId, isMock: true },
+          { id: 'mock-chap-22', name: 'Syllogisms', subject_id: subId, isMock: true }
         ];
-      } else if (subject.id === 'mock-sub-govt-apt') {
+      } else if (subId.includes('govt-gk')) {
         chapters = [
-          { id: 'mock-chap-17', name: 'Percentage & Average', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-18', name: 'Time and Work', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-19', name: 'Profit and Loss', subject_id: subject.id, isMock: true }
+          { id: 'mock-chap-23', name: 'Indian Constitution', subject_id: subId, isMock: true },
+          { id: 'mock-chap-24', name: 'Economic Sectors', subject_id: subId, isMock: true }
         ];
-      } else if (subject.id === 'mock-sub-govt-reason') {
+      } else if (subId.includes('gk-hist')) {
         chapters = [
-          { id: 'mock-chap-20', name: 'Number Series & Coding', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-21', name: 'Blood Relations', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-22', name: 'Syllogisms', subject_id: subject.id, isMock: true }
+          { id: 'mock-chap-25', name: 'Ancient Civilizations', subject_id: subId, isMock: true },
+          { id: 'mock-chap-26', name: 'World War Battles', subject_id: subId, isMock: true }
         ];
-      } else if (subject.id === 'mock-sub-govt-gk') {
+      } else if (subId.includes('gk-geo')) {
         chapters = [
-          { id: 'mock-chap-23', name: 'Indian Constitution', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-24', name: 'Economic Sectors', subject_id: subject.id, isMock: true }
+          { id: 'mock-chap-27', name: 'Continents & Oceans', subject_id: subId, isMock: true },
+          { id: 'mock-chap-28', name: 'Famous Capitals & Flags', subject_id: subId, isMock: true }
         ];
-      } else if (subject.id === 'mock-sub-gk-hist') {
+      } else if (subId.includes('gk-curr')) {
         chapters = [
-          { id: 'mock-chap-25', name: 'Ancient Civilizations', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-26', name: 'World War Battles', subject_id: subject.id, isMock: true }
-        ];
-      } else if (subject.id === 'mock-sub-gk-geo') {
-        chapters = [
-          { id: 'mock-chap-27', name: 'Continents & Oceans', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-28', name: 'Famous Capitals & Flags', subject_id: subject.id, isMock: true }
-        ];
-      } else if (subject.id === 'mock-sub-gk-curr') {
-        chapters = [
-          { id: 'mock-chap-29', name: 'Global News & Awards', subject_id: subject.id, isMock: true },
-          { id: 'mock-chap-30', name: 'Science & Tech Updates', subject_id: subject.id, isMock: true }
+          { id: 'mock-chap-29', name: 'Global News & Awards', subject_id: subId, isMock: true },
+          { id: 'mock-chap-30', name: 'Science & Tech Updates', subject_id: subId, isMock: true }
         ];
       } else {
         chapters = [
-          { id: `mock-chap-sub-${subject.id}-1`, name: 'Foundational Concept Chapter 1', subject_id: subject.id, isMock: true },
-          { id: `mock-chap-sub-${subject.id}-2`, name: 'Advanced Revision Chapter 2', subject_id: subject.id, isMock: true }
+          { id: `mock-chap-sub-${subId}-1`, name: 'Foundational Concept Chapter 1', subject_id: subId, isMock: true },
+          { id: `mock-chap-sub-${subId}-2`, name: 'Advanced Revision Chapter 2', subject_id: subId, isMock: true }
         ];
       }
     } else {
