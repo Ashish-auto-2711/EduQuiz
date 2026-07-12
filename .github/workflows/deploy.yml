@@ -24,29 +24,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build and Export
-        run: npm run build
-        env:
-          NEXT_PUBLIC_UPLOAD_DIR: "./public/uploads"
-          NEXTAUTH_URL: "https://ashish-auto-2711.github.io/EduQuiz"
-          NEXTAUTH_SECRET: "7a3b37a1f592cfdf70e5b8d2db0b16ce091f868a2bfd38c1a64f43477bb500de"
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './out'
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
