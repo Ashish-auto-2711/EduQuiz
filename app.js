@@ -134,20 +134,9 @@ async function dbRequest(endpoint, options = {}) {
   }
 }
 
-// Toast helper
-function showToast(title, desc, icon = '🔔') {
-  const toast = document.getElementById('toast-box');
-  document.getElementById('toast-title').innerText = title;
-  document.getElementById('toast-desc').innerText = desc;
-  document.getElementById('toast-icon').innerText = icon;
-
-  toast.style.transform = 'translateY(0)';
-  toast.style.opacity = '1';
-
-  setTimeout(() => {
-    toast.style.transform = 'translateY(-100px)';
-    toast.style.opacity = '0';
-  }, 4000);
+// Toast disabled — silent console log only
+function showToast(title, desc, icon) {
+  console.log(`[${icon || 'ℹ'}] ${title}: ${desc}`);
 }
 
 // SPA Hash Router
