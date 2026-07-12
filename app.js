@@ -1722,16 +1722,42 @@ document.getElementById('dashboard-edit-profile').onclick = () => {
     }
     const reader = new FileReader();
     reader.onload = () => {
-      selectedAvatar = reader.result; // base64 representation
-      
-      // Update preview to show custom image
-      document.getElementById('edit-avatar-preview-container').innerHTML = `
-        <img id="edit-avatar-preview-img" src="${selectedAvatar}" class="w-14 h-14 rounded-full object-cover border-2 border-indigo-500">
-      `;
-      // Deselect emoji chips
-      chips.forEach(x => {
-        x.className = 'avatar-chip w-10 h-10 rounded-xl border flex items-center justify-center transition-all border-white/5 bg-slate-900/60 hover:border-indigo-400 hover:bg-slate-900/80 text-lg';
-      });
+      const img = new Image();
+      img.src = reader.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_SIZE = 128;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height = Math.round((height * MAX_SIZE) / width);
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width = Math.round((width * MAX_SIZE) / height);
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        selectedAvatar = canvas.toDataURL('image/jpeg', 0.7);
+
+        // Update preview to show custom image
+        document.getElementById('edit-avatar-preview-container').innerHTML = `
+          <img id="edit-avatar-preview-img" src="${selectedAvatar}" class="w-14 h-14 rounded-full object-cover border-2 border-indigo-500">
+        `;
+        // Deselect emoji chips
+        chips.forEach(x => {
+          x.className = 'avatar-chip w-10 h-10 rounded-xl border flex items-center justify-center transition-all border-white/5 bg-slate-900/60 hover:border-indigo-400 hover:bg-slate-900/80 text-lg';
+        });
+      };
     };
     reader.readAsDataURL(file);
   };
