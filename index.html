@@ -710,8 +710,28 @@
         <p class="text-slate-500 text-sm">Choose your grade level, subject, and chapter to start learning.</p>
       </div>
 
-      <!-- Classes Selection -->
+      <!-- Classes/Categories Selection -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12">
+        <!-- Class 1-5 -->
+        <div onclick="selectClassForBrowse('1-5')" id="class-browse-1-5" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">👶</div>
+            <h3 class="text-base font-bold text-slate-800">Class 1 to 5</h3>
+            <p class="text-slate-400 text-xs mt-1.5">Primary school basic numeracy and science concepts.</p>
+          </div>
+          <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
+        </div>
+
+        <!-- Class 6-8 -->
+        <div onclick="selectClassForBrowse('6-8')" id="class-browse-6-8" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">🎒</div>
+            <h3 class="text-base font-bold text-slate-800">Class 6 to 8</h3>
+            <p class="text-slate-400 text-xs mt-1.5">Middle school foundational Science and Mathematics.</p>
+          </div>
+          <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
+        </div>
+
         <!-- Class 9 -->
         <div onclick="selectClassForBrowse(9)" id="class-browse-9" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
           <div>
@@ -748,6 +768,46 @@
             <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">12</div>
             <h3 class="text-base font-bold text-slate-800">Class 12</h3>
             <p class="text-slate-400 text-xs mt-1.5">Boards & Competitive Exams preparation.</p>
+          </div>
+          <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
+        </div>
+
+        <!-- JEE Prep -->
+        <div onclick="selectClassForBrowse('JEE')" id="class-browse-JEE" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">🚀</div>
+            <h3 class="text-base font-bold text-slate-800">JEE Prep</h3>
+            <p class="text-slate-400 text-xs mt-1.5">Engineering entrance exam mock tests.</p>
+          </div>
+          <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
+        </div>
+
+        <!-- NEET Prep -->
+        <div onclick="selectClassForBrowse('NEET')" id="class-browse-NEET" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">🩺</div>
+            <h3 class="text-base font-bold text-slate-800">NEET Prep</h3>
+            <p class="text-slate-400 text-xs mt-1.5">Medical entrance syllabus & high-yield MCQs.</p>
+          </div>
+          <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
+        </div>
+
+        <!-- Govt Exams -->
+        <div onclick="selectClassForBrowse('Govt')" id="class-browse-Govt" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">🏛️</div>
+            <h3 class="text-base font-bold text-slate-800">Govt Exams</h3>
+            <p class="text-slate-400 text-xs mt-1.5">UPSC, SSC, Banking aptitude preparation.</p>
+          </div>
+          <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
+        </div>
+
+        <!-- GK Challenge -->
+        <div onclick="selectClassForBrowse('GK')" id="class-browse-GK" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">🌍</div>
+            <h3 class="text-base font-bold text-slate-800">GK & Trivia</h3>
+            <p class="text-slate-400 text-xs mt-1.5">General Knowledge, Trivia, and daily challenges.</p>
           </div>
           <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
         </div>
