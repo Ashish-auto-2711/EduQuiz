@@ -1,11 +1,28 @@
 const fs = require('fs');
 const path = require('path');
 const xlsx = require('xlsx');
-const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient();
+const INSFORGE_URL = 'https://c43du8wy.us-east.insforge.app';
+const INSFORGE_KEY = 'anon_61ab7eb0294a9648862366b8f8304a46b8fc7bdb08db307e9ef9c1b014768351';
 
-// Normalise strings for comparison to avoid typos/casing mismatches
+// HTTP helper
+async function request(endpoint, options = {}) {
+  const headers = {
+    'apikey': INSFORGE_KEY,
+    'Authorization': `Bearer ${INSFORGE_KEY}`,
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+  const resp = await fetch(`${INSFORGE_URL}/api/database/records/${endpoint}`, { ...options, headers });
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(`DB Error [${resp.status}]: ${text}`);
+  }
+  if (resp.status === 204) return null;
+  return resp.json();
+}
+
+// Normalise strings for comparison
 function cleanString(str) {
   return (str || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
 }
@@ -39,7 +56,6 @@ function parseFilename(filename) {
       .replace(/_/g, ' ');
   }
 
-  // Map to common curriculum titles if matched
   const cleanedChap = cleanString(chapter);
   if (cleanedChap.includes('sexual reproduction')) chapter = 'Sexual Reproduction in Flowering Plants';
   else if (cleanedChap.includes('human reproduction')) chapter = 'Human Reproduction';
@@ -72,60 +88,53 @@ async function importFile(filepath) {
 
   // 1. Get or create Subject
   const subjectName = meta.classNum === 12 ? meta.subject : `${meta.subject} (Class ${meta.classNum})`;
-  const subject = await prisma.subject.upsert({
-    where: { name: subjectName },
-    update: {},
-    create: {
-      name: subjectName,
-      classGrade: meta.classNum,
-    },
-  });
-  console.log(`Subject matched: ${subjectName} (ID: ${subject.id})`);
+  let subjectId;
+  const existingSub = await request(`subjects?name=eq.${encodeURIComponent(subjectName)}`);
+  if (existingSub && existingSub.length > 0) {
+    subjectId = existingSub[0].id;
+  } else {
+    const subRows = await request('subjects', {
+      method: 'POST',
+      headers: { 'Prefer': 'return=representation' },
+      body: JSON.stringify([{ name: subjectName }])
+    });
+    subjectId = subRows[0].id;
+    console.log(`Created new Subject in DB: ${subjectName}`);
+  }
 
   // 2. Get or create Chapter
-  // Since Chapter has unique(subjectId, name)
-  const chapter = await prisma.chapter.upsert({
-    where: {
-      subjectId_name: {
-        subjectId: subject.id,
-        name: meta.chapter,
-      },
-    },
-    update: {},
-    create: {
-      subjectId: subject.id,
-      name: meta.chapter,
-    },
-  });
-  console.log(`Chapter matched: ${meta.chapter} (ID: ${chapter.id})`);
+  let chapterId;
+  const existingChap = await request(`chapters?subject_id=eq.${subjectId}&name=eq.${encodeURIComponent(meta.chapter)}`);
+  if (existingChap && existingChap.length > 0) {
+    chapterId = existingChap[0].id;
+  } else {
+    const chapRows = await request('chapters', {
+      method: 'POST',
+      headers: { 'Prefer': 'return=representation' },
+      body: JSON.stringify([{ subject_id: subjectId, name: meta.chapter }])
+    });
+    chapterId = chapRows[0].id;
+    console.log(`Created new Chapter in DB: ${meta.chapter}`);
+  }
 
   // 3. Get or create Quiz
   const quizName = `${meta.chapter} Practice Test`;
-  
-  // Find existing quiz or create it
-  let quiz = await prisma.quiz.findFirst({
-    where: {
-      chapterId: chapter.id,
-      name: quizName,
-    },
-  });
-
-  if (!quiz) {
-    quiz = await prisma.quiz.create({
-      data: {
-        chapterId: chapter.id,
-        name: quizName,
-      },
-    });
-    console.log(`Created new Quiz: ${quizName} (ID: ${quiz.id})`);
+  let quizId;
+  const existingQuiz = await request(`quizzes?chapter_id=eq.${chapterId}&name=eq.${encodeURIComponent(quizName)}`);
+  if (existingQuiz && existingQuiz.length > 0) {
+    quizId = existingQuiz[0].id;
   } else {
-    console.log(`Quiz matched: ${quizName} (ID: ${quiz.id})`);
+    const quizRows = await request('quizzes', {
+      method: 'POST',
+      headers: { 'Prefer': 'return=representation' },
+      body: JSON.stringify([{ chapter_id: chapterId, name: quizName }])
+    });
+    quizId = quizRows[0].id;
+    console.log(`Created new Quiz in DB: ${quizName}`);
   }
 
-  // 4. Fetch existing questions to prevent duplicates
-  const existingQuestions = await prisma.question.findMany({
-    where: { quizId: quiz.id },
-  });
+  // 4. Fetch existing questions to prevent duplicacy
+  const existingQuestions = await request(`questions?quiz_id=eq.${quizId}&limit=1000`);
   const existingTexts = new Set(existingQuestions.map(q => cleanString(q.question)));
   console.log(`Found ${existingTexts.size} existing questions in this quiz.`);
 
@@ -154,25 +163,27 @@ async function importFile(filepath) {
       else correct = 'A';
     }
 
-    const difficulty = (row['Difficulty'] || row['difficulty'] || 'easy').toString().trim().toLowerCase();
-
     toInsert.push({
-      quizId: quiz.id,
+      quiz_id: quizId,
       question: questionText,
-      optionA: optA,
-      optionB: optB,
-      optionC: optC,
-      optionD: optD,
-      correctOption: correct,
-      difficulty: ['easy', 'moderate', 'hard', 'neet'].includes(difficulty) ? difficulty : 'easy',
+      option_a: optA,
+      option_b: optB,
+      option_c: optC,
+      option_d: optD,
+      correct_option: correct
     });
   });
 
   if (toInsert.length > 0) {
     console.log(`Inserting ${toInsert.length} new unique questions...`);
-    await prisma.question.createMany({
-      data: toInsert,
-    });
+    // Batch insert in blocks of 50
+    for (let i = 0; i < toInsert.length; i += 50) {
+      const batch = toInsert.slice(i, i + 50);
+      await request('questions', {
+        method: 'POST',
+        body: JSON.stringify(batch)
+      });
+    }
   } else {
     console.log('No new unique questions to insert.');
   }
@@ -181,7 +192,7 @@ async function importFile(filepath) {
 }
 
 async function importAll() {
-  const quizDir = path.join(process.cwd(), 'legacy', 'quiz');
+  const quizDir = path.join(process.cwd(), 'quiz');
   if (!fs.existsSync(quizDir)) {
     console.warn(`Quiz directory not found at: ${quizDir}`);
     return;
@@ -203,6 +214,4 @@ async function importAll() {
   console.log('ALL QUIZZES IMPORTED SUCCESSFULLY WITH NO DUPLICATES!');
 }
 
-importAll()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+importAll().catch(console.error);
