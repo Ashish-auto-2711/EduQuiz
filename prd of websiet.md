@@ -717,6 +717,244 @@ The home page is the single biggest trust/premium signal. Structure it like a po
 - [ ] Premium landing-page-style home (hero, stats, trending, testimonials, footer sitemap)
 - [ ] Scroll-reveal + cursor-glow micro-interactions on desktop
 
+
+Build a premium, production-ready Quiz Platform with the following features. 
+Prioritize mobile-first responsive design throughout — every screen must work flawlessly on mobile, tablet, and desktop.
+
+=====================================================
+PRIORITY 1 — CORE AUTH & ONBOARDING (Must Have)
+=====================================================
+- Google OAuth login (Sign in with Google)
+- Email/password signup + login with email verification
+- Forgot password / reset password flow
+- JWT/session-based auth with auto-refresh, persistent login
+- Protected routes — quiz attempt only allowed when logged in
+- First-time onboarding flow: username, profile photo, favorite subjects, skill level (Beginner/Intermediate/Advanced)
+- Guest mode: allow quiz preview but lock results/leaderboard until signup ("Sign up to save your score")
+
+=====================================================
+PRIORITY 2 — USER DASHBOARD (Must Have)
+=====================================================
+- Summary cards: Total Quizzes, Avg Accuracy %, Current Streak, Total XP/Points, Global Rank
+- Progress chart: accuracy trend over 7/30/90 days (line chart)
+- Subject-wise performance breakdown (radar chart or bar chart)
+- Weak vs strong topic auto-detection (based on wrong answers)
+- Recent activity table: quiz name, date, score, accuracy, time taken, retry option
+- Badges/achievements showcase
+- Editable profile: photo upload, bio, social links, favorite subjects
+- Mobile: convert dashboard cards into swipeable horizontal scroll widgets
+
+=====================================================
+PRIORITY 3 — LEADERBOARD & SOCIAL (High Value)
+=====================================================
+- Global leaderboard with filters: All-time / Weekly / Monthly / Category-wise
+- Top 3 highlighted with gold/silver/bronze animated badges + confetti effect
+- Sticky "Your Rank" card visible even when scrolled down
+- Rank change indicators (↑ green / ↓ red with animation)
+- Follow/Unfollow system + Followers/Following count
+- Public profile pages (shareable link: yourquizapp.com/u/username)
+- "Following Feed" — see friends' recent quiz activity, like a mini social feed
+- 1-on-1 stat comparison tool (radar chart comparing two users)
+- Mobile: leaderboard as vertical card list with sticky header for top 3
+
+=====================================================
+PRIORITY 4 — GAMIFICATION (Engagement Boosters)
+=====================================================
+- XP system (points = accuracy + speed bonus + difficulty multiplier)
+- Level system: Bronze → Silver → Gold → Platinum → Diamond
+- Daily streak tracker with "streak freeze" (1 free miss/week like Duolingo)
+- Unlockable achievement badges (25+ badges: "Perfect Score", "Speed Demon", "7-Day Streak", "Comeback King")
+- Daily challenge quiz (bonus XP, resets every 24h with countdown timer)
+- Weekly tournament mode — leaderboard resets weekly, winners get special badge
+- Spin-the-wheel / mystery box reward after streak milestones
+- Push notification / email when overtaken in rank ("Rahul just passed you! Reclaim your spot 🔥")
+
+=====================================================
+PRIORITY 5 — ADVANCED ANALYTICS (Premium Differentiator)
+=====================================================
+- Time-per-question analysis with heatmap
+- Difficulty-wise accuracy breakdown (easy/medium/hard)
+- Downloadable PDF performance report
+- AI-based personalized recommendations ("You're weak in Algebra, try these 3 quizzes")
+- Comparative analytics: your accuracy vs average of all users in that category
+- Study time tracker (total time spent learning/quizzing this week/month)
+
+=====================================================
+PRIORITY 6 — QUIZ EXPERIENCE ENHANCEMENTS (My Additions)
+=====================================================
+- Multiple quiz modes: Timed Mode, Practice Mode (no timer), Survival Mode (1 wrong = out), Multiplayer 1v1 live quiz battle
+- Real-time multiplayer quiz (Socket.io) — challenge a friend or random opponent live
+- Question types: MCQ, True/False, Fill-in-blank, Image-based, Audio-based
+- Instant answer explanation after each question (not just at the end)
+- Bookmark/flag question to review later
+- Adaptive difficulty — questions get harder/easier based on live performance
+- Offline mode (PWA) — download quiz packs, attempt without internet, sync later
+
+=====================================================
+PRIORITY 7 — MONETIZATION READY (Premium SaaS Features)
+=====================================================
+- Free vs Premium tier (limit quizzes/day for free users, unlock unlimited + advanced analytics for premium)
+- Referral system — invite friends, both get bonus XP/premium days
+- In-app currency (coins) earned from quizzes, usable for streak-freeze/avatar unlocks
+- Custom avatar/theme unlocks as rewards (not just photo upload)
+
+=====================================================
+PRIORITY 8 — MOBILE-SPECIFIC UX (Non-negotiable)
+=====================================================
+- Bottom tab navigation (Home, Quiz, Leaderboard, Dashboard, Profile) for mobile
+- Touch-optimized quiz UI — large tap targets, swipe to next question
+- Skeleton loaders instead of spinners for perceived speed
+- Pull-to-refresh on dashboard/leaderboard
+- Haptic feedback on correct/wrong answer (where supported)
+- Add-to-homescreen PWA prompt
+- Dark mode toggle, saved as user preference
+
+=====================================================
+TECH STACK NOTES
+=====================================================
+- Auth: Firebase Auth / NextAuth (Google + Email provider)
+- Database: Firestore or MongoDB with indexed queries for leaderboard performance
+- Real-time: Socket.io or Firebase Realtime DB for multiplayer + live rank updates
+- Storage: Firebase Storage / Cloudinary for profile photos
+- Charts: Recharts / Chart.js — fully responsive
+- PWA: Service worker + manifest.json for offline + installability
+- State management: Zustand/Redux for dashboard & leaderboard live data
+- Notifications: Firebase Cloud Messaging (push) + SendGrid (email)
+
+Build in phases: 
+Phase 1 = Priority 1+2 (Auth + Dashboard)
+Phase 2 = Priority 3+4 (Leaderboard + Gamification)
+Phase 3 = Priority 5+6 (Analytics + Quiz modes)
+Phase 4 = Priority 7+8 (Monetization + Mobile polish)
+
+Build a powerful, mobile-optimized Admin Panel (separate from user panel) for the quiz platform with the following features:
+
+=====================================================
+PRIORITY 1 — ADMIN AUTH & ACCESS CONTROL
+=====================================================
+- Separate admin login (not same as user login) — admin@domain.com restricted access
+- Role-based access: Super Admin, Moderator, Content Editor (different permission levels)
+- Admin 2FA (email OTP or authenticator app) for extra security
+- Activity log — track which admin did what action and when (audit trail)
+- Auto-logout after inactivity for security
+
+=====================================================
+PRIORITY 2 — QUIZ & CONTENT MANAGEMENT
+=====================================================
+- Bulk import quizzes via CSV/Excel/JSON upload (with downloadable template file)
+- Manual quiz builder: add category, subcategory, difficulty, question type, time limit, marks
+- Bulk import questions (with images/audio) via file upload
+- Question bank library — reusable questions across multiple quizzes, searchable/filterable
+- Preview quiz as user before publishing
+- Draft / Published / Archived status for each quiz
+- Duplicate quiz feature (clone existing quiz to edit fast)
+- Category & tag management (add/edit/delete quiz categories, subjects, tags)
+- Schedule quiz publish/unpublish (auto-publish at set date/time)
+
+=====================================================
+PRIORITY 3 — DATABASE / FILE IMPORT-EXPORT
+=====================================================
+- Import database of users/quizzes/questions via CSV/JSON/Excel with validation before insert
+- Export any data table (users, quizzes, results, leaderboard) to CSV/Excel/PDF
+- Import error report — show which rows failed and why (duplicate, missing field, invalid format)
+- Backup & restore database option from admin panel
+- **File Storage Rule: Any file uploaded by users or admin (profile photos, quiz images, question images/audio) must be stored in a dedicated, organized folder structure inside the source code — NOT mixed with other assets:**
+  - /uploads/profile-images/{userId}/
+  - /uploads/quiz-images/{quizId}/
+  - /uploads/question-media/{questionId}/
+  - /uploads/admin-uploads/ads/
+  - Generate unique filenames (UUID + original extension) to avoid overwrite conflicts
+  - Store only the file path/URL reference in database, not the file itself
+  - Add file size/type validation on upload (max size, allowed formats: jpg/png/webp for images)
+
+=====================================================
+PRIORITY 4 — USER MANAGEMENT
+=====================================================
+- View all registered users in a searchable, filterable, sortable table (name, email, join date, status, quizzes taken, accuracy, last login)
+- View individual user's full profile & analytics from admin side
+- Ban/Suspend/Activate user account
+- Reset user password from admin side
+- Send direct notification/email to specific user or bulk users
+- View login history/device/IP per user (security monitoring)
+- Manually adjust user XP/points/badges (for corrections or rewards)
+- Delete user account (with data cleanup — GDPR compliant)
+- Export user list to CSV
+
+=====================================================
+PRIORITY 5 — ADS MANAGEMENT (New)
+=====================================================
+- Add/Edit/Delete ad placements directly from admin panel (no code changes needed)
+- Ad types supported: Banner ad, Interstitial (between quiz questions), Native ad, Video ad, Sidebar ad
+- Upload custom ad image/banner + set click-through URL, OR paste Google AdSense/third-party ad script code
+- Ad placement zones configurable: Homepage top, Dashboard sidebar, Between quiz questions, Leaderboard page, Quiz result page
+- Enable/Disable specific ad placement with one toggle
+- Schedule ads (start date - end date) for campaigns
+- Ad performance analytics: impressions, clicks, CTR per placement
+- Set ad frequency (e.g. show interstitial every 3rd quiz only, not every time — avoid annoying users)
+- Mobile-specific ad slots (separate banner sizes for mobile vs desktop)
+
+=====================================================
+PRIORITY 6 — LEADERBOARD & GAMIFICATION CONTROL
+=====================================================
+- Manually feature/pin a user on leaderboard (for promotions/contests)
+- Reset leaderboard manually (for new season/tournament)
+- Create/manage badges & achievements (name, icon upload, unlock criteria)
+- Configure XP rules (points per correct answer, speed bonus %, difficulty multiplier) from admin panel — no code change needed
+- Create/manage weekly tournaments and set prize/reward badges
+
+=====================================================
+PRIORITY 7 — ANALYTICS & REPORTS DASHBOARD
+=====================================================
+- Overview: Total Users, Active Today, Total Quizzes Taken, Avg Platform Accuracy, Revenue (if premium/ads)
+- Growth charts: new signups over time, DAU/MAU (daily/monthly active users)
+- Most popular quizzes/categories (engagement ranking)
+- Drop-off analysis (where users abandon quizzes mid-way)
+- Device/browser analytics (mobile vs desktop usage %)
+- Downloadable reports (PDF/Excel) for any date range
+
+=====================================================
+PRIORITY 8 — MONETIZATION & SUBSCRIPTION CONTROL
+=====================================================
+- Manage Free vs Premium plan limits from admin panel (quizzes/day, features locked)
+- View all premium subscribers, revenue, expiry dates
+- Manually upgrade/downgrade a user's plan
+- Configure referral program rewards (XP/coins per referral) from admin panel
+- Coupon/promo code generator for premium subscriptions
+
+=====================================================
+PRIORITY 9 — NOTIFICATIONS & COMMUNICATION
+=====================================================
+- Push notification composer — send to all users, specific segment, or single user
+- Email campaign builder (basic template + send to user list)
+- In-app announcement banner (e.g. "New quiz added!") — toggle on/off from admin
+- Automated notification triggers: welcome email, streak-break reminder, rank-overtaken alert (admin can enable/disable each)
+
+=====================================================
+PRIORITY 10 — MOBILE-OPTIMIZED ADMIN UX (Non-negotiable)
+=====================================================
+- Fully responsive admin panel — usable on mobile/tablet, not just desktop
+- Collapsible sidebar navigation → hamburger menu on mobile
+- Data tables convert to card view on small screens (not horizontal scroll mess)
+- Touch-friendly buttons, swipe actions (swipe to ban/delete/approve on mobile)
+- Quick-action floating button on mobile (add quiz, add user, add ad — fast access)
+- Dark mode toggle for admin panel too
+
+=====================================================
+TECH STACK NOTES
+=====================================================
+- Admin auth: separate role-based middleware (isAdmin, isSuperAdmin checks)
+- File uploads: Multer (Node) or equivalent, storing files in organized /uploads subfolders as specified above, served via static route or CDN
+- Database: MongoDB/PostgreSQL with proper indexing for admin queries (search/filter at scale)
+- Charts/analytics: Recharts/Chart.js, fully responsive
+- Bulk import: use libraries like papaparse (CSV) / xlsx (Excel) with row-by-row validation before DB insert
+- Ads: store ad configs in DB (type, image URL, target URL, placement, active status, schedule) and render dynamically on frontend based on placement zone
+- Real-time admin stats: optional Socket.io for live "Active Users Now" counter
+
+Build in phases:
+Phase 1 = Admin Auth + User Management + File Storage structure
+Phase 2 = Quiz/Content Management + Bulk Import-Export
+Phase 3 = Ads Management + Leaderboard/Gamification Control
+Phase 4 = Analytics Dashboard + Notifications + Mobile polish
 ---
 
 *End of PRD — ready to hand to an AI coding agent or developer to scaffold the project.*

@@ -1,0 +1,230 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  CONTENT_EDITOR
+  MODERATOR
+  SUPER_ADMIN
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum AdType {
+  BANNER
+  INTERSTITIAL
+  NATIVE
+  VIDEO
+  SIDEBAR
+}
+
+model User {
+  id                   String            @id @default(uuid())
+  name                 String?
+  username             String?           @unique
+  email                String            @unique
+  emailVerified        DateTime?
+  passwordHash         String?
+  resetToken           String?           @unique
+  resetTokenExpiry     DateTime?
+  image                String?
+  bio                  String?
+  socialLinks          Json?             // { twitter: '', github: '', etc }
+  favoriteSubjects     String[]          @default([])
+  skillLevel           SkillLevel        @default(BEGINNER)
+  role                 Role              @default(USER)
+  
+  // Gamification
+  xp                   Int               @default(0)
+  streak               Int               @default(0)
+  streakFreezeCount    Int               @default(1) // Duolingo style 1 free miss/week
+  lastActiveDate       DateTime?
+  level                String            @default("Bronze")
+  coins                Int               @default(0)
+  isPremium            Boolean           @default(false)
+  
+  // Referrals
+  referralCode         String            @unique @default(cuid())
+  referredById         String?
+  referredBy           User?             @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals            User[]            @relation("UserReferrals")
+  
+  // Timestamps
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  // Relations
+  attempts             QuizAttempt[]
+  achievements         UserAchievement[]
+  tournamentPlays      TournamentParticipant[]
+  logs                 AdminLog[]
+  
+  // Social Follow
+  followers            Follower[]        @relation("UserFollowers")
+  following            Follower[]        @relation("UserFollowing")
+
+  @@index([xp(desc)])
+}
+
+model Follower {
+  id          String   @id @default(uuid())
+  followerId  String
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Subject {
+  id         String    @id @default(uuid())
+  name       String    @unique
+  classGrade Int?      // Class 9, 10, 11, 12
+  chapters   Chapter[]
+
+  @@map("subjects")
+}
+
+model Chapter {
+  id        String    @id @default(uuid())
+  subjectId String    @map("subject_id")
+  subject   Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  name      String
+  quizzes   Quiz[]
+
+  @@unique([subjectId, name])
+  @@map("chapters")
+}
+
+model Quiz {
+  id        String        @id @default(uuid())
+  chapterId String        @map("chapter_id")
+  chapter   Chapter       @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime      @default(now()) @map("created_at")
+  questions Question[]
+  attempts  QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  quizId        String   @map("quiz_id")
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question      String
+  optionA       String   @map("option_a")
+  optionB       String   @map("option_b")
+  optionC       String   @map("option_c")
+  optionD       String   @map("option_d")
+  correctOption String   @map("correct_option") // 'A', 'B', 'C', 'D'
+  difficulty    String   @default("easy")      // 'easy', 'moderate', 'hard', 'neet'
+
+  @@map("questions")
+}
+
+model QuizAttempt {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId     String
+  quiz       Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  score      Int      // total score (correct answers)
+  accuracy   Float    // percentage (0 to 100)
+  timeTaken  Int      // in seconds
+  answers    Json     // [{ questionId: '', selectedOption: '', isCorrect: true, timeSpent: 5 }]
+  difficulty String   @default("easy")
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([quizId])
+}
+
+model AdPlacement {
+  id          String    @id @default(uuid())
+  type        AdType
+  imageUrl    String?
+  clickUrl    String?
+  scriptCode  String?
+  zones       String[]  // ['homepage-top', 'results', etc.]
+  isActive    Boolean   @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  frequency   Int       @default(3) // show every X quizzes/questions
+  impressions Int       @default(0)
+  clicks      Int       @default(0)
+  createdAt   DateTime  @default(now())
+}
+
+model Achievement {
+  id          String            @id @default(uuid())
+  name        String            @unique
+  description String
+  iconName    String
+  criteria    Json              // { type: 'streak'|'accuracy'|'xp', value: 7 }
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+model Tournament {
+  id             String                  @id @default(uuid())
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  rewardBadgeId  String?
+  isActive       Boolean                 @default(true)
+  participants   TournamentParticipant[]
+  createdAt      DateTime                @default(now())
+}
+
+model TournamentParticipant {
+  id           String     @id @default(uuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score        Int
+  accuracy     Float
+  rank         Int?
+  createdAt    DateTime   @default(now())
+
+  @@unique([tournamentId, userId])
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model AdminLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  target    String
+  createdAt DateTime @default(now())
+}
