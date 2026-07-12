@@ -990,8 +990,10 @@
       <!-- Tabs -->
       <div class="flex gap-1 border-b border-slate-200 mb-8 overflow-x-auto">
         <button class="admin-tab-btn pb-3 px-4 text-sm font-bold text-indigo-600 border-b-2 border-indigo-600" data-tab="users">Users</button>
+        <button class="admin-tab-btn pb-3 px-4 text-sm font-semibold text-slate-400 hover:text-slate-700 border-b-2 border-transparent" data-tab="content">Content Manager</button>
         <button class="admin-tab-btn pb-3 px-4 text-sm font-semibold text-slate-400 hover:text-slate-700 border-b-2 border-transparent" data-tab="import">Bulk Import</button>
         <button class="admin-tab-btn pb-3 px-4 text-sm font-semibold text-slate-400 hover:text-slate-700 border-b-2 border-transparent" data-tab="ads">Ad Settings</button>
+        <button class="admin-tab-btn pb-3 px-4 text-sm font-semibold text-slate-400 hover:text-slate-700 border-b-2 border-transparent" data-tab="system">System Seeder</button>
       </div>
 
       <!-- Users panel -->
@@ -1008,6 +1010,35 @@
               </tr></thead>
               <tbody id="admin-users-tbody" class="divide-y divide-slate-50"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Manager Panel -->
+      <div id="admin-tab-content" class="admin-panel">
+        <div class="card p-8 rounded-2xl shadow-sm space-y-6">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <h3 class="font-bold text-lg text-slate-800">Quiz Content Manager</h3>
+            <div class="flex gap-2">
+              <button id="admin-refresh-content-btn" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-250 font-bold text-xs">🔄 Refresh Catalog</button>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Subjects Column -->
+            <div class="space-y-4">
+              <h4 class="font-extrabold text-xs text-slate-500 uppercase tracking-wider">Subjects Catalog</h4>
+              <div id="admin-subjects-list" class="space-y-2 max-h-[350px] overflow-y-auto pr-2 divide-y divide-slate-100">
+                Loading subjects...
+              </div>
+            </div>
+            <!-- Chapters Column -->
+            <div class="space-y-4">
+              <h4 class="font-extrabold text-xs text-slate-500 uppercase tracking-wider">Chapters for Selected Subject</h4>
+              <div id="admin-chapters-list" class="space-y-2 max-h-[350px] overflow-y-auto pr-2 divide-y divide-slate-100">
+                Select a subject on the left to view and manage its chapters.
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1054,6 +1085,25 @@
             <input type="text" id="admin-ad-url" class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="https://...">
           </div>
           <button id="admin-ad-submit-btn" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-md shadow-indigo-100 transition-all">Publish Ad Placement</button>
+      </div>
+
+      <!-- System Seeder Panel -->
+      <div id="admin-tab-system" class="admin-panel">
+        <div class="card p-8 rounded-2xl shadow-sm max-w-xl space-y-6">
+          <h3 class="font-bold text-lg text-slate-800">System Database Seeder</h3>
+          <p class="text-sm text-slate-500">Run seeder batches to import curriculum questions or wipe practice databases clean.</p>
+          
+          <div class="p-4 bg-indigo-50 border border-indigo-150 rounded-2xl space-y-3">
+            <h4 class="font-bold text-sm text-indigo-850">Curriculum Demo Seeders</h4>
+            <p class="text-xs text-indigo-700">This seeds hundreds of high-yield practice questions for Class 9, Class 10, and Class 11 Physics, Chemistry, and Biology.</p>
+            <button id="admin-seed-curriculum-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow-md transition-all">Seed Curriculum Practice Quizzes</button>
+          </div>
+          
+          <div class="p-4 bg-red-50 border border-red-200 rounded-2xl space-y-3">
+            <h4 class="font-bold text-sm text-red-800">Dangerous Operations</h4>
+            <p class="text-xs text-red-600">Completely wipes out all subjects, chapters, quizzes, and questions. This cannot be undone.</p>
+            <button id="admin-clear-database-btn" class="px-5 py-2.5 bg-red-650 hover:bg-red-650 text-white font-bold rounded-xl text-xs shadow-md transition-all">Truncate All Tables</button>
+          </div>
         </div>
       </div>
     </section>

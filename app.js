@@ -201,6 +201,9 @@ function handleRouting() {
     }
     document.getElementById('admin-view').classList.add('active');
     loadAdminUsers();
+    if (window.adminRefreshContent) {
+      window.adminRefreshContent();
+    }
   }
 
   // Update navbar layout
@@ -1895,13 +1898,267 @@ adminTabs.forEach(tab => {
     });
     tab.className = 'admin-tab-btn pb-3 px-4 text-sm font-bold text-indigo-600 border-b-2 border-indigo-600';
 
-    document.querySelectorAll('.admin-panel').forEach(s => s.classList.add('hidden'));
+    document.querySelectorAll('.admin-panel').forEach(s => {
+      s.classList.remove('active');
+      s.classList.add('hidden');
+    });
     const activePanel = document.getElementById(`admin-tab-${tab.getAttribute('data-tab')}`);
     if (activePanel) {
+      activePanel.classList.add('active');
       activePanel.classList.remove('hidden');
     }
   };
 });
+
+// Admin Content Manager Handlers
+window.adminRefreshContent = async function() {
+  const subContainer = document.getElementById('admin-subjects-list');
+  const chapContainer = document.getElementById('admin-chapters-list');
+  if (!subContainer) return;
+
+  subContainer.innerHTML = '<div class="text-xs text-slate-500 py-4 text-center">Loading subjects...</div>';
+  chapContainer.innerHTML = '<div class="text-xs text-slate-500 py-4 text-center">Select a subject on the left to view and manage its chapters.</div>';
+
+  try {
+    const subjects = await dbRequest('subjects?order=name.asc&limit=100');
+    subContainer.innerHTML = '';
+
+    if (!subjects.length) {
+      subContainer.innerHTML = '<div class="text-xs text-slate-500 py-4 text-center">No subjects found.</div>';
+      return;
+    }
+
+    subjects.forEach(sub => {
+      const div = document.createElement('div');
+      div.className = 'flex items-center justify-between p-3 border-b border-slate-100/50 hover:bg-slate-55 transition-colors cursor-pointer';
+      div.innerHTML = `
+        <span class="text-xs font-bold text-slate-700 truncate max-w-[150px]">${sub.name}</span>
+        <div class="flex items-center gap-2">
+          <button class="view-chaps-btn px-2.5 py-1 bg-indigo-50 border border-indigo-200 text-indigo-600 rounded-lg text-[10px] font-bold hover:bg-indigo-100 transition-all">Chapters</button>
+          <button class="delete-sub-btn px-2.5 py-1 bg-red-50 border border-red-200 text-red-600 rounded-lg text-[10px] font-bold hover:bg-red-100 transition-all">Delete</button>
+        </div>
+      `;
+
+      // Click event for viewing chapters
+      div.querySelector('.view-chaps-btn').onclick = (e) => {
+        e.stopPropagation();
+        adminLoadChapters(sub);
+      };
+      
+      // Click event for deleting subject
+      div.querySelector('.delete-sub-btn').onclick = async (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete subject "${sub.name}" and all its chapters/quizzes?`)) {
+          try {
+            await dbRequest(`subjects?id=eq.${sub.id}`, { method: 'DELETE' });
+            showToast('Deleted', 'Subject successfully removed.', '✓');
+            window.adminRefreshContent();
+          } catch (err) {
+            showToast('Error', 'Failed to delete subject.', '⚠️');
+          }
+        }
+      };
+
+      subContainer.appendChild(div);
+    });
+  } catch (err) {
+    subContainer.innerHTML = '<div class="text-xs text-red-500 py-4 text-center">Error loading subjects.</div>';
+  }
+};
+
+async function adminLoadChapters(subject) {
+  const chapContainer = document.getElementById('admin-chapters-list');
+  if (!chapContainer) return;
+
+  chapContainer.innerHTML = `<div class="text-xs text-slate-500 py-4 text-center">Loading chapters for ${subject.name}...</div>`;
+
+  try {
+    const chapters = await dbRequest(`chapters?subject_id=eq.${subject.id}&order=name.asc&limit=100`);
+    chapContainer.innerHTML = '';
+
+    if (!chapters.length) {
+      chapContainer.innerHTML = '<div class="text-xs text-slate-500 py-4 text-center">No chapters found for this subject.</div>';
+      return;
+    }
+
+    chapters.forEach(chap => {
+      const div = document.createElement('div');
+      div.className = 'flex items-center justify-between p-3 border-b border-slate-100/50 hover:bg-slate-55 transition-colors';
+      div.innerHTML = `
+        <span class="text-xs font-bold text-slate-700 truncate max-w-[150px]">${chap.name}</span>
+        <button class="delete-chap-btn px-2.5 py-1 bg-red-50 border border-red-200 text-red-600 rounded-lg text-[10px] font-bold hover:bg-red-100 transition-all">Delete</button>
+      `;
+
+      // Click event for deleting chapter
+      div.querySelector('.delete-chap-btn').onclick = async () => {
+        if (confirm(`Delete chapter "${chap.name}"?`)) {
+          try {
+            await dbRequest(`chapters?id=eq.${chap.id}`, { method: 'DELETE' });
+            showToast('Deleted', 'Chapter successfully removed.', '✓');
+            adminLoadChapters(subject);
+          } catch (err) {
+            showToast('Error', 'Failed to delete chapter.', '⚠️');
+          }
+        }
+      };
+
+      chapContainer.appendChild(div);
+    });
+  } catch (err) {
+    chapContainer.innerHTML = '<div class="text-xs text-red-500 py-4 text-center">Error loading chapters.</div>';
+  }
+}
+
+// Bind refresh button in content manager
+const refreshBtn = document.getElementById('admin-refresh-content-btn');
+if (refreshBtn) {
+  refreshBtn.onclick = () => window.adminRefreshContent();
+}
+
+// System Database Seeder Handlers
+const CURRICULUM_SEED_DATA = [
+  {
+    subject: "Biology (Class 11)",
+    chapter: "The Living World",
+    quiz: "Basic Taxonomy and Classification",
+    questions: [
+      { question: "Who is known as the Father of Taxonomy?", option_a: "Aristotle", option_b: "Carl Linnaeus", option_c: "Gregor Mendel", option_d: "Charles Darwin", correct_option: "B", difficulty: "easy" },
+      { question: "The basic unit of biological classification is:", option_a: "Genus", option_b: "Family", option_c: "Species", option_d: "Kingdom", correct_option: "C", difficulty: "easy" },
+      { question: "Which of the following is a defining characteristic of living organisms?", option_a: "Growth", option_b: "Ability to make sound", option_c: "Response to external stimuli", option_d: "Locomotion", correct_option: "C", difficulty: "moderate" }
+    ]
+  },
+  {
+    subject: "Chemistry (Class 12)",
+    chapter: "Solutions",
+    quiz: "Raoult's Law and Colligative Properties",
+    questions: [
+      { question: "Which of the following is a colligative property?", option_a: "Osmotic pressure", option_b: "Surface tension", option_c: "Viscosity", option_d: "Refractive index", correct_option: "A", difficulty: "easy" },
+      { question: "Colligative properties of a solution depend on:", option_a: "Nature of solute particles", option_b: "Number of solute particles", option_c: "Nature of solvent", option_d: "None of the above", correct_option: "B", difficulty: "moderate" },
+      { question: "An ideal solution is one which obeys:", option_a: "Henry's Law", option_b: "Raoult's Law", option_c: "Boyle's Law", option_d: "Charles's Law", correct_option: "B", difficulty: "easy" }
+    ]
+  },
+  {
+    subject: "Physics (Class 11)",
+    chapter: "Units and Measurements",
+    quiz: "Dimensional Analysis and Errors",
+    questions: [
+      { question: "What is the SI unit of magnetic flux density?", option_a: "Weber", option_b: "Tesla", option_c: "Gauss", option_d: "Henry", correct_option: "B", difficulty: "easy" },
+      { question: "The dimensions of Planck's constant are same as that of:", option_a: "Linear momentum", option_b: "Angular momentum", option_c: "Work", option_d: "Power", correct_option: "B", difficulty: "hard" }
+    ]
+  },
+  {
+    subject: "Mathematics (Class 12)",
+    chapter: "Matrices",
+    quiz: "Types of Matrices & Determinants",
+    questions: [
+      { question: "If a matrix is both symmetric and skew-symmetric, then it is a:", option_a: "Diagonal matrix", option_b: "Zero matrix", option_c: "Identity matrix", option_d: "Scalar matrix", correct_option: "B", difficulty: "moderate" }
+    ]
+  }
+];
+
+async function adminSeedCurriculum() {
+  showToast('Seeding Database', 'Importing curriculum practice quizzes, please wait...', 'ℹ️');
+  
+  try {
+    for (const batch of CURRICULUM_SEED_DATA) {
+      // 1. Get or create Subject
+      let subList = await dbRequest(`subjects?name=eq.${encodeURIComponent(batch.subject)}`);
+      let subId = subList.length > 0 ? subList[0].id : null;
+      if (!subId) {
+        const subResp = await dbRequest('subjects', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=representation' },
+          body: JSON.stringify([{ name: batch.subject }])
+        });
+        subId = subResp[0].id;
+      }
+
+      // 2. Get or create Chapter
+      let chapList = await dbRequest(`chapters?subject_id=eq.${subId}&name=eq.${encodeURIComponent(batch.chapter)}`);
+      let chapId = chapList.length > 0 ? chapList[0].id : null;
+      if (!chapId) {
+        const chapResp = await dbRequest('chapters', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=representation' },
+          body: JSON.stringify([{ subject_id: subId, name: batch.chapter }])
+        });
+        chapId = chapResp[0].id;
+      }
+
+      // 3. Get or create Quiz
+      let quizList = await dbRequest(`quizzes?chapter_id=eq.${chapId}&name=eq.${encodeURIComponent(batch.quiz)}`);
+      let quizId = quizList.length > 0 ? quizList[0].id : null;
+      if (!quizId) {
+        const quizResp = await dbRequest('quizzes', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=representation' },
+          body: JSON.stringify([{ chapter_id: chapId, name: batch.quiz }])
+        });
+        quizId = quizResp[0].id;
+      }
+
+      // 4. Create Questions
+      const questionsPayload = batch.questions.map(q => ({
+        quiz_id: quizId,
+        question: q.question,
+        option_a: q.option_a,
+        option_b: q.option_b,
+        option_c: q.option_c,
+        option_d: q.option_d,
+        correct_option: q.correct_option,
+        difficulty: q.difficulty || 'mixed'
+      }));
+
+      await dbRequest('questions', {
+        method: 'POST',
+        body: JSON.stringify(questionsPayload)
+      });
+    }
+
+    showToast('Seeding Complete', 'Successfully seeded curriculum practice quizzes.', '✓');
+    if (window.adminRefreshContent) {
+      window.adminRefreshContent();
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Error', 'Failed to seed curriculum data.', '⚠️');
+  }
+}
+
+async function adminClearDatabase() {
+  if (!confirm('Are you absolutely sure you want to clear the entire database? This will permanently delete all subjects, chapters, quizzes, and questions.')) {
+    return;
+  }
+  
+  showToast('Clearing Database', 'Deleting all records, please wait...', 'ℹ️');
+  try {
+    const subjects = await dbRequest('subjects');
+    for (const sub of subjects) {
+      await dbRequest(`subjects?id=eq.${sub.id}`, { method: 'DELETE' });
+    }
+    
+    // Also delete any dangling items just in case RLS or constraints prevented full cascade
+    const chapters = await dbRequest('chapters');
+    for (const chap of chapters) {
+      await dbRequest(`chapters?id=eq.${chap.id}`, { method: 'DELETE' });
+    }
+
+    showToast('Success', 'Database cleared successfully.', '✓');
+    if (window.adminRefreshContent) {
+      window.adminRefreshContent();
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Error', 'Failed to clear database.', '⚠️');
+  }
+}
+
+// Bind buttons on system seeder tab
+const seedBtn = document.getElementById('admin-seed-curriculum-btn');
+if (seedBtn) seedBtn.onclick = () => adminSeedCurriculum();
+
+const clearBtn = document.getElementById('admin-clear-database-btn');
+if (clearBtn) clearBtn.onclick = () => adminClearDatabase();
 
 // Admin Bulk Import Logic
 document.getElementById('admin-import-submit-btn').onclick = async () => {
