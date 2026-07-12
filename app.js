@@ -5,6 +5,12 @@
 const INSFORGE_URL = 'https://c43du8wy.us-east.insforge.app/api/database/records';
 const INSFORGE_KEY = 'anon_61ab7eb0294a9648862366b8f8304a46b8fc7bdb08db307e9ef9c1b014768351';
 
+// Admin emails — these always get SUPER_ADMIN role
+const ADMIN_EMAILS = ['ak0002711@gmail.com'];
+
+// Google OAuth Client ID — replace with your actual Google Cloud Console Client ID
+const GOOGLE_CLIENT_ID = '464498574063-t5n73vdl5rg9vv0if8d6l99n8jqbskrh.apps.googleusercontent.com';
+
 // Global State
 let currentUser = null;
 let currentQuiz = null;
@@ -1009,6 +1015,7 @@ document.getElementById('signup-form').onsubmit = async (e) => {
       return;
     }
 
+    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
     const newUser = await dbRequest('users', {
       method: 'POST',
       headers: { 'Prefer': 'return=representation' },
@@ -1016,16 +1023,15 @@ document.getElementById('signup-form').onsubmit = async (e) => {
         name,
         email,
         password_hash: hash,
-        role: 'USER',
-        coins: 100, // starting coins
+        role: isAdmin ? 'SUPER_ADMIN' : 'USER',
+        coins: isAdmin ? 9999 : 100,
         favorite_subjects: []
       }])
     });
 
-    showToast('Registered!', 'Account created successfully! Directing to Login.', '🎉');
     window.location.hash = '#login';
   } catch (err) {
-    showToast('Error', 'Failed to process signup request.', '⚠️');
+    console.error('Signup error:', err);
   }
 };
 
@@ -1045,9 +1051,14 @@ document.getElementById('login-form').onsubmit = async (e) => {
     }
 
     currentUser = users[0];
+
+    // Force SUPER_ADMIN for known admin emails even if DB role differs
+    if (ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
+      currentUser.role = 'SUPER_ADMIN';
+    }
+
     localStorage.setItem('userSession', JSON.stringify(currentUser));
-    
-    showToast('Welcome!', `Logged in successfully as ${currentUser.name}.`, '✓');
+    updateNavbar();
 
     if (!currentUser.username) {
       document.getElementById('onboard-modal').classList.remove('hidden');
@@ -1055,48 +1066,105 @@ document.getElementById('login-form').onsubmit = async (e) => {
       window.location.hash = '#dashboard';
     }
   } catch (err) {
-    showToast('Error', 'Failed to sign in. Verify network connectivity.', '⚠️');
+    console.error('Login error:', err);
   }
 };
 
-// Mock google login
-document.getElementById('google-login-btn').onclick = async () => {
+// Google Identity Services (GSI) — Real OAuth Login
+async function handleGoogleCredential(response) {
   try {
-    const randomId = Math.floor(Math.random() * 1000);
-    const email = `google_user_${randomId}@gmail.com`;
-    
-    let userList = await dbRequest(`users?email=eq.${email}`);
+    // Decode the JWT credential from Google
+    const base64Url = response.credential.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
+
+    const email = payload.email;
+    const name = payload.name || email.split('@')[0];
+    const picture = payload.picture || '';
+    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+
+    // Find or create user in DB
+    let userList = await dbRequest(`users?email=eq.${encodeURIComponent(email)}`);
     let user;
 
     if (userList.length > 0) {
       user = userList[0];
+      // Always enforce admin role if in ADMIN_EMAILS
+      if (isAdmin && user.role !== 'SUPER_ADMIN') {
+        await dbRequest(`users?id=eq.${user.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ role: 'SUPER_ADMIN', coins: 9999 })
+        });
+        user.role = 'SUPER_ADMIN';
+      }
     } else {
       const resp = await dbRequest('users', {
         method: 'POST',
         headers: { 'Prefer': 'return=representation' },
         body: JSON.stringify([{
-          name: `Google User ${randomId}`,
-          email: email,
-          avatar: '🧑‍💻',
-          role: 'USER',
-          coins: 150
+          name,
+          email,
+          avatar: picture,
+          role: isAdmin ? 'SUPER_ADMIN' : 'USER',
+          coins: isAdmin ? 9999 : 150,
+          favorite_subjects: []
         }])
       });
       user = resp[0];
     }
 
     currentUser = user;
+    if (isAdmin) currentUser.role = 'SUPER_ADMIN';
     localStorage.setItem('userSession', JSON.stringify(currentUser));
-    showToast('Logged in!', 'Google mock login completed successfully.', '✓');
-    
+    updateNavbar();
+
     if (!currentUser.username) {
       document.getElementById('onboard-modal').classList.remove('hidden');
     } else {
-      window.location.hash = '#dashboard';
+      window.location.hash = isAdmin ? '#admin' : '#dashboard';
     }
   } catch (err) {
-    showToast('Error', 'Google auth failed.', '⚠️');
+    console.error('Google auth error:', err);
   }
+}
+
+// Initialize Google GSI on page load
+function initGoogleSignIn() {
+  if (typeof google === 'undefined') return;
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: true
+  });
+}
+
+// Google login button click — shows Google One Tap popup
+document.getElementById('google-login-btn').onclick = () => {
+  if (typeof google === 'undefined') {
+    alert('Google Sign-In failed to load. Please check your internet connection and try again.');
+    return;
+  }
+  google.accounts.id.prompt((notification) => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      // Fallback: render button in a popup overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4';
+      overlay.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-xs text-center space-y-4">
+          <h3 class="font-bold text-slate-800 text-lg">Sign in with Google</h3>
+          <p class="text-slate-500 text-xs">Click below to continue with your Google account.</p>
+          <div id="gsi-btn-container" class="flex justify-center"></div>
+          <button onclick="this.closest('.fixed').remove()" class="text-xs text-slate-400 hover:text-slate-600">Cancel</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      google.accounts.id.renderButton(
+        document.getElementById('gsi-btn-container'),
+        { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', width: 240 }
+      );
+    }
+  });
 };
 
 // Onboarding submission

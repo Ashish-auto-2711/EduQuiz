@@ -97,9 +97,6 @@
     .admin-panel.active { display: block; }
 
     /* Toast */
-    #toast-box {
-      transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
-    }
 
     /* Transition for view changes */
     .view-section.active {
@@ -877,6 +874,8 @@
 
   </main>
 
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
   <script src="app.js"></script>
 </body>
 </html>
