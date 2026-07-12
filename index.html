@@ -124,7 +124,7 @@
       <!-- Desktop links -->
       <div class="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-500">
         <a href="#home" class="hover:text-indigo-600 transition-colors">Home</a>
-        <a href="#home" id="nav-categories" class="hover:text-indigo-600 transition-colors">Categories</a>
+        <a href="#categories" id="nav-categories" class="hover:text-indigo-600 transition-colors">Categories</a>
         <a href="#leaderboard" class="hover:text-indigo-600 transition-colors">Leaderboard</a>
         <a href="#home" id="nav-pricing" class="hover:text-indigo-600 transition-colors">Pricing</a>
       </div>
@@ -158,7 +158,7 @@
     <!-- Mobile menu -->
     <div id="mobile-menu-overlay" class="hidden md:hidden border-t border-slate-100 bg-white px-6 py-5 space-y-4">
       <a href="#home" class="block text-base font-semibold text-slate-700 hover:text-indigo-600">Home</a>
-      <a href="#home" class="block text-base font-semibold text-slate-700 hover:text-indigo-600">Categories</a>
+      <a href="#categories" class="block text-base font-semibold text-slate-700 hover:text-indigo-600">Categories</a>
       <a href="#leaderboard" class="block text-base font-semibold text-slate-700 hover:text-indigo-600">Leaderboard</a>
       <a href="#home" class="block text-base font-semibold text-slate-700 hover:text-indigo-600">Pricing</a>
       <hr class="border-slate-100">
@@ -197,7 +197,7 @@
                 <a href="#login" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-center shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02]">
                   Start a Free Quiz
                 </a>
-                <a href="#home" onclick="document.getElementById('categories').scrollIntoView({behavior:'smooth'})" class="px-8 py-4 border border-indigo-200 bg-white/70 hover:bg-white text-indigo-700 font-semibold rounded-xl text-center transition-all">
+                <a href="#categories" class="px-8 py-4 border border-indigo-200 bg-white/70 hover:bg-white text-indigo-700 font-semibold rounded-xl text-center transition-all">
                   Explore Categories
                 </a>
               </div>
@@ -252,17 +252,67 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10">
           <div>
             <h2 class="text-3xl font-extrabold text-slate-900">Explore Quiz Categories</h2>
-            <p class="text-slate-500 mt-1 text-sm">Select your grade and begin testing your knowledge.</p>
+            <p class="text-slate-500 mt-1 text-sm">Select your grade level to access curated practice tests.</p>
           </div>
+          <a href="#categories" class="mt-4 md:mt-0 px-5 py-2.5 bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 rounded-xl text-xs font-bold transition-all shadow-sm">View All Categories</a>
         </div>
-        <!-- Grade filters -->
-        <div class="flex flex-wrap gap-2 mb-8">
-          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-indigo-500 bg-indigo-600 text-white font-bold text-xs uppercase shadow-sm" data-grade="12">Class 12</button>
-          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-500 font-bold text-xs uppercase shadow-sm hover:border-indigo-300" data-grade="11">Class 11</button>
-          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-500 font-bold text-xs uppercase shadow-sm hover:border-indigo-300" data-grade="10">Class 10</button>
-          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-500 font-bold text-xs uppercase shadow-sm hover:border-indigo-300" data-grade="9">Class 9</button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Class 9 Card -->
+          <a href="#categories?class=9" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-300 hover:shadow-lg transition-all">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">
+                🎓
+              </div>
+              <h3 class="text-base font-bold text-slate-800">Class 9 Syllabus</h3>
+              <p class="text-slate-400 text-xs mt-1.5">Foundational courses in Mathematics, Science, and Social Science.</p>
+            </div>
+            <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500 group-hover:text-indigo-700">
+              Browse Subjects <span class="group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+          </a>
+
+          <!-- Class 10 Card -->
+          <a href="#categories?class=10" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-300 hover:shadow-lg transition-all">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">
+                🏫
+              </div>
+              <h3 class="text-base font-bold text-slate-800">Class 10 Board Prep</h3>
+              <p class="text-slate-400 text-xs mt-1.5">Comprehensive board exam practice with mock exams.</p>
+            </div>
+            <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500 group-hover:text-indigo-700">
+              Browse Subjects <span class="group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+          </a>
+
+          <!-- Class 11 Card -->
+          <a href="#categories?class=11" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-300 hover:shadow-lg transition-all">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">
+                📚
+              </div>
+              <h3 class="text-base font-bold text-slate-800">Class 11 Syllabus</h3>
+              <p class="text-slate-400 text-xs mt-1.5">Advance preparation for Physics, Chemistry, and Biology.</p>
+            </div>
+            <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500 group-hover:text-indigo-700">
+              Browse Subjects <span class="group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+          </a>
+
+          <!-- Class 12 Card -->
+          <a href="#categories?class=12" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-300 hover:shadow-lg transition-all">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">
+                🏆
+              </div>
+              <h3 class="text-base font-bold text-slate-800">Class 12 Boards &amp; NEET</h3>
+              <p class="text-slate-400 text-xs mt-1.5">High-yield prep for board exams and competitive entrance tests.</p>
+            </div>
+            <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500 group-hover:text-indigo-700">
+              Browse Subjects <span class="group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+          </a>
         </div>
-        <div id="categories-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"></div>
       </div>
 
       <!-- 4. TRENDING QUIZZES -->
@@ -690,6 +740,69 @@
             <tbody id="attempts-tbody" class="divide-y divide-slate-50"></tbody>
           </table>
         </div>
+      </div>
+    </section>    <!-- ======================================
+         CATEGORIES VIEW  (#categories)
+         ====================================== -->
+    <section id="categories-view" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="text-center mb-10 space-y-2">
+        <h2 class="text-4xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Explore Categories</h2>
+        <p class="text-slate-500 text-sm">Choose your grade level, subject, and chapter to start learning.</p>
+      </div>
+
+      <!-- Classes Selection -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <!-- Class 9 -->
+        <div onclick="selectClassForBrowse(9)" id="class-browse-9" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">9</div>
+            <h3 class="text-base font-bold text-slate-800">Class 9</h3>
+            <p class="text-slate-400 text-xs mt-1.5">Maths, Science, English, Social Science.</p>
+          </div>
+          <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
+        </div>
+
+        <!-- Class 10 -->
+        <div onclick="selectClassForBrowse(10)" id="class-browse-10" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">10</div>
+            <h3 class="text-base font-bold text-slate-800">Class 10</h3>
+            <p class="text-slate-400 text-xs mt-1.5">Full Board Exam syllabus practice tests.</p>
+          </div>
+          <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
+        </div>
+
+        <!-- Class 11 -->
+        <div onclick="selectClassForBrowse(11)" id="class-browse-11" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">11</div>
+            <h3 class="text-base font-bold text-slate-800">Class 11</h3>
+            <p class="text-slate-400 text-xs mt-1.5">Physics, Chemistry, Biology chapter questions.</p>
+          </div>
+          <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
+        </div>
+
+        <!-- Class 12 -->
+        <div onclick="selectClassForBrowse(12)" id="class-browse-12" class="card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">12</div>
+            <h3 class="text-base font-bold text-slate-800">Class 12</h3>
+            <p class="text-slate-400 text-xs mt-1.5">Boards & Competitive Exams preparation.</p>
+          </div>
+          <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500">Explore Subjects →</div>
+        </div>
+      </div>
+
+      <!-- Subjects Showcase Grid (smooth revealed) -->
+      <div id="browse-subjects-section" class="hidden space-y-6 mt-12 pt-12 border-t border-slate-200">
+        <h3 id="browse-subjects-title" class="text-2xl font-black text-slate-900 font-display">Subjects in Class 12</h3>
+        <div id="browse-subjects-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+      </div>
+
+      <!-- Chapters List Grid (smooth revealed) -->
+      <div id="browse-chapters-section" class="hidden space-y-6 mt-12 pt-12 border-t border-slate-200">
+        <h3 id="browse-chapters-title" class="text-2xl font-black text-slate-900 font-display">Chapters</h3>
+        <div id="browse-chapters-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
       </div>
     </section>
 

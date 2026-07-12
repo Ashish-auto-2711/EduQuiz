@@ -179,6 +179,9 @@ function handleRouting() {
     }
     document.getElementById('dashboard-view').classList.add('active');
     loadUserDashboard();
+  } else if (hash.startsWith('#categories')) {
+    document.getElementById('categories-view').classList.add('active');
+    loadCategoriesView();
   } else if (hash === '#leaderboard') {
     document.getElementById('leaderboard-view').classList.add('active');
     loadFullLeaderboard();
@@ -339,6 +342,157 @@ async function loadCategories(grade) {
     container.innerHTML = '<div class="col-span-full text-center text-xs text-red-400 py-8">Error loading subjects.</div>';
   }
 }
+
+// Render the dedicated Categories view page
+async function loadCategoriesView() {
+  // Parse query params to see if a class was pre-selected (e.g. #categories?class=12)
+  const hash = window.location.hash;
+  const match = hash.match(/\?class=(\d+)/);
+  const preSelectedClass = match ? parseInt(match[1]) : null;
+
+  // Render or highlight active class
+  if (preSelectedClass) {
+    selectClassForBrowse(preSelectedClass);
+  } else {
+    // If no preselected class, hide subjects and chapters showcase
+    document.getElementById('browse-subjects-section').classList.add('hidden');
+    document.getElementById('browse-chapters-section').classList.add('hidden');
+    
+    // Reset all class card styling
+    [9, 10, 11, 12].forEach(g => {
+      const card = document.getElementById(`class-browse-${g}`);
+      if (card) {
+        card.className = 'card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all border-slate-200';
+      }
+    });
+  }
+}
+
+// Global functions exposed to window since they are referenced in HTML onclick attributes
+window.selectClassForBrowse = async function(grade) {
+  // Highlight chosen class card
+  [9, 10, 11, 12].forEach(g => {
+    const card = document.getElementById(`class-browse-${g}`);
+    if (!card) return;
+    if (g === grade) {
+      card.className = 'card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer border-2 border-indigo-600 bg-indigo-50/30 hover:shadow-md transition-all';
+    } else {
+      card.className = 'card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all border-slate-200';
+    }
+  });
+
+  const subjectsTitle = document.getElementById('browse-subjects-title');
+  const subjectsGrid = document.getElementById('browse-subjects-grid');
+  const subjectsSection = document.getElementById('browse-subjects-section');
+  const chaptersSection = document.getElementById('browse-chapters-section');
+
+  // Hide chapters list first when switching class
+  chaptersSection.classList.add('hidden');
+
+  subjectsTitle.innerText = `Subjects in Class ${grade}`;
+  subjectsGrid.innerHTML = '<div class="col-span-full text-center text-xs text-slate-500 py-8">Loading subjects...</div>';
+  subjectsSection.classList.remove('hidden');
+  
+  // Smooth scroll to subjects
+  setTimeout(() => {
+    subjectsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+
+  try {
+    const allSubjects = await dbRequest('subjects?limit=100');
+    // Filter subjects by class grade suffix e.g. "Biology (Class 11)" or "Biology" (default for class 12)
+    const subjects = grade === 12
+      ? allSubjects.filter(s => !s.name.includes('Class 9') && !s.name.includes('Class 10') && !s.name.includes('Class 11'))
+      : allSubjects.filter(s => s.name.includes(`Class ${grade}`));
+
+    subjectsGrid.innerHTML = '';
+    
+    if (!subjects.length) {
+      subjectsGrid.innerHTML = '<div class="col-span-full text-center text-xs text-slate-500 py-8 font-semibold">No subjects available for Class ' + grade + ' yet. Seeder is running in background...</div>';
+      return;
+    }
+
+    const colors = [
+      'from-blue-600 to-indigo-600',
+      'from-purple-600 to-pink-600',
+      'from-emerald-600 to-teal-600',
+      'from-amber-600 to-orange-600'
+    ];
+
+    subjects.forEach((sub, idx) => {
+      const color = colors[idx % colors.length];
+      const nameWithoutClass = sub.name.split(' (Class')[0]; // Clean name for display
+      
+      const card = document.createElement('div');
+      card.className = 'card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer transition-all border border-slate-200 hover:border-indigo-300 hover:shadow-md';
+      card.innerHTML = `
+        <div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">
+            📚
+          </div>
+          <h3 class="text-base font-bold text-slate-800">${nameWithoutClass}</h3>
+          <p class="text-slate-400 text-xs mt-1.5">View practice chapters</p>
+        </div>
+        <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500 group-hover:text-indigo-700">
+          Browse Chapters <span class="group-hover:translate-x-1 transition-transform">→</span>
+        </div>
+      `;
+      card.onclick = () => selectSubjectForBrowse(sub, grade);
+      subjectsGrid.appendChild(card);
+    });
+
+  } catch (err) {
+    console.error(err);
+    subjectsGrid.innerHTML = '<div class="col-span-full text-center text-xs text-red-500 py-8">Failed to load subjects.</div>';
+  }
+};
+
+window.selectSubjectForBrowse = async function(subject, grade) {
+  const chaptersTitle = document.getElementById('browse-chapters-title');
+  const chaptersGrid = document.getElementById('browse-chapters-grid');
+  const chaptersSection = document.getElementById('browse-chapters-section');
+
+  const cleanSubjectName = subject.name.split(' (Class')[0];
+  chaptersTitle.innerText = `${cleanSubjectName} (Class ${grade}) Chapters`;
+  chaptersGrid.innerHTML = '<div class="col-span-full text-center text-xs text-slate-500 py-8">Loading chapters...</div>';
+  chaptersSection.classList.remove('hidden');
+
+  // Smooth scroll to chapters
+  setTimeout(() => {
+    chaptersSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+
+  try {
+    const chapters = await dbRequest(`chapters?subject_id=eq.${subject.id}&order=name.asc&limit=100`);
+    chaptersGrid.innerHTML = '';
+
+    if (!chapters.length) {
+      chaptersGrid.innerHTML = '<div class="col-span-full text-center text-xs text-slate-500 py-8">No chapters found for this subject.</div>';
+      return;
+    }
+
+    chapters.forEach(chap => {
+      const card = document.createElement('div');
+      card.className = 'card p-4 rounded-xl flex items-center justify-between group cursor-pointer transition-all border border-slate-200 hover:border-indigo-300';
+      card.innerHTML = `
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">📖</span>
+          <div>
+            <h4 class="font-bold text-sm text-slate-850 group-hover:text-indigo-600 transition-colors">${chap.name}</h4>
+            <p class="text-[10px] text-slate-400 mt-0.5">Click to configure test parameters</p>
+          </div>
+        </div>
+        <span class="text-indigo-500 font-bold text-xs group-hover:translate-x-1 transition-transform">Configure →</span>
+      `;
+      card.onclick = () => launchQuizConfig(chap);
+      chaptersGrid.appendChild(card);
+    });
+
+  } catch (err) {
+    console.error(err);
+    chaptersGrid.innerHTML = '<div class="col-span-full text-center text-xs text-red-500 py-8">Failed to load chapters.</div>';
+  }
+};
 
 // Render Chapters list inside a bottom sheet modal
 async function loadChaptersModal(subject) {
@@ -1593,8 +1747,8 @@ if (dashLogoutBtn) {
 
 // Initial setup
 window.onhashchange = handleRouting;
-window.onload = () => {
-  initAuth();
+window.onload = async () => {
+  await initAuth();
   handleRouting();
   loadFaqAccordion();
   runHeroSimulator();
