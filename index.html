@@ -1,22 +1,21 @@
 <!DOCTYPE html>
-<html lang="en" class="dark scroll-smooth">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>EduQuiz — Premium Learning & Quiz Platform</title>
   <meta name="description" content="Master your curriculum, track performance, climb the leaderboards, and excel in your exams with our premium quiz platform.">
-  <meta name="theme-color" content="#030712">
+  <meta name="theme-color" content="#6366f1">
 
-  <!-- Fonts & Icons -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
   <!-- CDNs -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -24,12 +23,7 @@
             display: ['Outfit', 'sans-serif'],
           },
           colors: {
-            brand: {
-              50: '#f5f3ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-            }
+            primary: { 50:'#eef2ff', 100:'#e0e7ff', 500:'#6366f1', 600:'#4f46e5', 700:'#4338ca' }
           }
         }
       }
@@ -38,214 +32,214 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  
-  <!-- Custom Styling overrides -->
+
   <style>
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+    /* View routing */
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+
+    /* Glass card — light */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(99,102,241,0.06);
     }
-    ::-webkit-scrollbar-track {
-      background: #030712;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #1f2937;
-      border-radius: 99px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #374151;
+    .card:hover {
+      border-color: #c7d2fe;
+      box-shadow: 0 4px 24px rgba(99,102,241,0.12);
     }
 
-    /* Glassmorphism */
-    .glass-card {
-      background: rgba(17, 24, 39, 0.65);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+    /* Hero section — GIF background ONLY here */
+    #hero-section {
+      position: relative;
+      overflow: hidden;
     }
-    .glass-card-hover:hover {
-      background: rgba(17, 24, 39, 0.85);
-      border-color: rgba(99, 102, 241, 0.25);
-      box-shadow: 0 0 30px rgba(99, 102, 241, 0.1);
-      transform: translateY(-2px);
+    #hero-section .hero-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('https://i.ibb.co/gLxNYHDY/Animate-them.gif');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
-    .glass-input {
-      background: rgba(17, 24, 39, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    #hero-section .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(238,242,255,0.88) 50%, rgba(224,231,255,0.85) 100%);
     }
-    .glass-input:focus {
-      border-color: rgba(99, 102, 241, 0.5);
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
-    }
-
-    /* Custom Gradients */
-    .gradient-glow {
-      background: radial-gradient(circle 800px at 50% -200px, rgba(99, 102, 241, 0.16), transparent);
+    #hero-section .hero-content {
+      position: relative;
+      z-index: 10;
     }
 
-    /* Hide utilities */
-    .view-section {
-      display: none;
+    /* Simulator card options */
+    .sim-opt {
+      transition: all 0.25s ease;
     }
+    .sim-opt.correct {
+      border-color: #10b981 !important;
+      background: #ecfdf5 !important;
+      color: #065f46;
+    }
+
+    /* Accordion */
+    .faq-body { display: none; }
+    .faq-body.open { display: block; }
+
+    /* Admin content sections */
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; }
+
+    /* Toast */
+    #toast-box {
+      transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* Transition for view changes */
     .view-section.active {
-      display: block;
+      animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
-<body class="bg-[#030712] text-slate-100 min-h-screen flex flex-col font-sans relative antialiased selection:bg-indigo-500/30 selection:text-white">
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
 
-  <!-- Background GIF with black overlay -->
-  <div class="fixed inset-0 -z-50 pointer-events-none transition-all duration-700 bg-cover bg-center bg-no-repeat" style="background-image: url('https://i.ibb.co/gLxNYHDY/Animate-them.gif');"></div>
-  <div class="fixed inset-0 -z-40 pointer-events-none bg-black/85"></div>
-
-  <!-- Main Radial Glow decoration -->
-  <div class="fixed top-0 inset-x-0 h-[600px] -z-30 pointer-events-none gradient-glow"></div>
-
-  <!-- TOAST NOTIFICATION POPUP -->
-  <div id="toast-box" class="fixed top-6 right-6 z-[100] transform translate-y-[-100px] opacity-0 transition-all duration-300 flex items-center gap-3 p-4 rounded-xl border glass-card shadow-2xl max-w-sm">
-    <div id="toast-icon" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm text-indigo-400">🔔</div>
+  <!-- TOAST -->
+  <div id="toast-box" class="fixed top-5 right-5 z-[200] flex items-start gap-3 bg-white border border-slate-200 shadow-xl rounded-2xl p-4 max-w-xs opacity-0 -translate-y-4 pointer-events-none">
+    <span id="toast-icon" class="text-xl">🔔</span>
     <div>
-      <p id="toast-title" class="font-bold text-sm text-slate-200">Notice</p>
-      <p id="toast-desc" class="text-slate-400 text-xs mt-0.5">Information loaded successfully.</p>
+      <p id="toast-title" class="text-sm font-bold text-slate-800"></p>
+      <p id="toast-desc" class="text-xs text-slate-500 mt-0.5 leading-normal"></p>
     </div>
   </div>
 
-  <!-- ==========================================
-       1. NAVBAR (Sticky, Responsive)
-       ========================================== -->
-  <nav id="app-nav" class="sticky top-0 inset-x-0 z-50 transition-all duration-300 py-4 px-4 sm:px-6 lg:px-8 border-b border-white/5 bg-slate-950/80 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <!-- ===================== NAVBAR ===================== -->
+  <nav id="app-nav" class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+
+      <!-- Logo -->
       <a href="#home" class="flex items-center gap-2 select-none">
-        <span class="text-2xl font-extrabold font-display tracking-tight bg-gradient-to-r from-indigo-300 via-indigo-500 to-purple-500 bg-clip-text text-transparent">EduQuiz</span>
+        <span class="text-2xl font-black font-display bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">EduQuiz</span>
       </a>
 
-      {/* Menu links - Desktop */}
-      <div id="nav-links" class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-400">
-        <a href="#home" class="hover:text-white transition-colors">Home</a>
-        <a href="#home#categories" class="hover:text-white transition-colors">Categories</a>
-        <a href="#leaderboard" class="hover:text-white transition-colors">Leaderboards</a>
-        <a href="#home#pricing" class="hover:text-white transition-colors">Pricing</a>
+      <!-- Desktop links -->
+      <div class="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-500">
+        <a href="#home" class="hover:text-indigo-600 transition-colors">Home</a>
+        <a href="#home" id="nav-categories" class="hover:text-indigo-600 transition-colors">Categories</a>
+        <a href="#leaderboard" class="hover:text-indigo-600 transition-colors">Leaderboard</a>
+        <a href="#home" id="nav-pricing" class="hover:text-indigo-600 transition-colors">Pricing</a>
       </div>
 
-      {/* Auth state wrapper */}
-      <div class="flex items-center gap-4">
-        <!-- Logged out states -->
+      <!-- Auth actions -->
+      <div class="flex items-center gap-3">
+        <!-- Logged out -->
         <div id="logged-out-actions" class="flex items-center gap-2">
-          <a href="#login" class="text-sm font-semibold text-slate-400 hover:text-white px-3 py-1.5 transition-colors">Login</a>
-          <a href="#signup" class="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl transition-all shadow-md shadow-indigo-600/10">Sign Up</a>
+          <a href="#login" class="text-sm font-semibold text-slate-500 hover:text-indigo-600 px-3 py-1.5 transition-colors">Login</a>
+          <a href="#signup" class="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 px-5 py-2 rounded-xl transition-all shadow-md shadow-indigo-200">Sign Up</a>
         </div>
-
-        <!-- Logged in states -->
-        <div id="logged-in-actions" class="hidden flex items-center gap-3">
-          <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold">
-            <span class="text-sm">🪙</span>
-            <span id="nav-coins">0</span>
-          </div>
-          <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-bold">
-            <span class="text-sm">⚡</span>
-            <span id="nav-xp">0 XP</span>
-          </div>
-          <a href="#dashboard" class="relative w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-sm text-indigo-300 select-none cursor-pointer" id="nav-profile-btn">
-            U
-          </a>
+        <!-- Logged in -->
+        <div id="logged-in-actions" class="hidden items-center gap-3">
+          <span class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-bold">
+            🪙 <span id="nav-coins">0</span>
+          </span>
+          <span class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 text-xs font-bold">
+            ⚡ <span id="nav-xp">0 XP</span>
+          </span>
+          <a href="#dashboard" id="nav-profile-btn" class="w-9 h-9 rounded-full bg-indigo-600 text-white font-bold text-sm flex items-center justify-center cursor-pointer shadow-md shadow-indigo-200">U</a>
         </div>
-
-        <!-- Admin tag -->
-        <a href="#admin" id="nav-admin-badge" class="hidden text-[10px] font-black tracking-widest text-indigo-400 border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 rounded-full uppercase">Admin</a>
-
-        <!-- Mobile menu toggle -->
-        <button id="mobile-menu-btn" class="md:hidden text-slate-400 hover:text-white p-1">
-          <i data-lucide="menu"></i>
+        <!-- Admin badge -->
+        <a href="#admin" id="nav-admin-badge" class="hidden text-[10px] font-black tracking-widest text-indigo-600 border border-indigo-200 bg-indigo-50 px-2 py-0.5 rounded-full uppercase">Admin</a>
+        <!-- Mobile hamburger -->
+        <button id="mobile-menu-btn" class="md:hidden p-2 text-slate-500 hover:text-indigo-600 transition-colors">
+          <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
       </div>
     </div>
 
-    <!-- Mobile Full-Screen overlay navigation -->
-    <div id="mobile-menu-overlay" class="hidden fixed inset-x-0 top-[65px] bg-slate-950/98 backdrop-blur-xl border-t border-white/5 flex flex-col p-6 space-y-6 animate-fade-in shadow-2xl">
-      <a href="#home" class="text-lg font-semibold text-slate-350 hover:text-white">Home</a>
-      <a href="#home#categories" class="text-lg font-semibold text-slate-350 hover:text-white">Categories</a>
-      <a href="#leaderboard" class="text-lg font-semibold text-slate-350 hover:text-white">Leaderboards</a>
-      <a href="#home#pricing" class="text-lg font-semibold text-slate-350 hover:text-white">Pricing</a>
-      <hr class="border-white/5 my-2">
-      <div id="mobile-menu-auth" class="flex flex-col gap-3">
-        <!-- populated dynamically -->
-      </div>
+    <!-- Mobile menu -->
+    <div id="mobile-menu-overlay" class="hidden md:hidden border-t border-slate-100 bg-white px-6 py-5 space-y-4">
+      <a href="#home" class="block text-base font-semibold text-slate-700 hover:text-indigo-600">Home</a>
+      <a href="#home" class="block text-base font-semibold text-slate-700 hover:text-indigo-600">Categories</a>
+      <a href="#leaderboard" class="block text-base font-semibold text-slate-700 hover:text-indigo-600">Leaderboard</a>
+      <a href="#home" class="block text-base font-semibold text-slate-700 hover:text-indigo-600">Pricing</a>
+      <hr class="border-slate-100">
+      <div id="mobile-menu-auth" class="space-y-2"></div>
     </div>
   </nav>
 
-  <!-- Main View Container -->
-  <main class="flex-grow flex flex-col">
+  <!-- ===================== MAIN ===================== -->
+  <main class="flex-grow">
 
-    <!-- ==========================================
-         LANDING VIEW (#home)
-         ========================================== -->
+    <!-- ======================================
+         HOME VIEW  (#home)
+         ====================================== -->
     <section id="home-view" class="view-section active">
-      {/* 2. HERO SECTION */}
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-bold animate-pulse">
-              <span class="text-sm">🔥</span>
-              <span>Class 11 & 12 Syllabus Live!</span>
-            </div>
-            <h1 class="text-4xl sm:text-5xl md:text-6xl font-black font-display tracking-tight leading-[1.05] text-white">
-              Test Your Knowledge. <br>
-              <span class="bg-gradient-to-r from-indigo-300 via-indigo-500 to-purple-500 bg-clip-text text-transparent">Climb the Leaderboard.</span> <br>
-              Learn Smarter.
-            </h1>
-            <p class="text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl mx-auto lg:mx-0">
-              Excel in your curriculum with thousands of high-yield NCERT Biology, Physics, and Chemistry practice tests. Compare stats live, earn XP, and unlock special badges.
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <a href="#login" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-center shadow-lg shadow-indigo-600/20 transition-all select-none hover:scale-[1.03]">
-                Start a Free Quiz
-              </a>
-              <a href="#home#categories" class="px-8 py-4 border border-white/5 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold rounded-xl text-center transition-all select-none">
-                Explore Categories
-              </a>
-            </div>
 
-            <!-- Trust Indicators -->
-            <div class="pt-6 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-slate-400 text-xs">
-              <div class="flex items-center gap-1.5">
-                <i data-lucide="check-circle" class="text-emerald-500 w-4 h-4"></i>
-                <span>10,000+ Quizzes Taken</span>
+      <!-- 1. HERO — animated GIF background ONLY here -->
+      <div id="hero-section" class="py-20 md:py-28">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-14 items-center">
+            <!-- Left copy -->
+            <div class="lg:col-span-7 space-y-7 text-center lg:text-left">
+              <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold">
+                🔥 Class 11 &amp; 12 Syllabus Live!
               </div>
-              <div class="flex items-center gap-1.5">
-                <i data-lucide="users" class="text-indigo-400 w-4 h-4"></i>
-                <span>5,000+ Active Learners</span>
+              <h1 class="text-4xl sm:text-5xl md:text-6xl font-black font-display tracking-tight leading-[1.05] text-slate-900">
+                Test Your Knowledge.<br>
+                <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Climb the Leaderboard.</span><br>
+                Learn Smarter.
+              </h1>
+              <p class="text-slate-600 text-base leading-relaxed max-w-xl mx-auto lg:mx-0">
+                Excel in your curriculum with thousands of high-yield NCERT Biology, Physics, and Chemistry practice tests. Track accuracy, earn XP, and unlock badges.
+              </p>
+              <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <a href="#login" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-center shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02]">
+                  Start a Free Quiz
+                </a>
+                <a href="#home" onclick="document.getElementById('categories').scrollIntoView({behavior:'smooth'})" class="px-8 py-4 border border-indigo-200 bg-white/70 hover:bg-white text-indigo-700 font-semibold rounded-xl text-center transition-all">
+                  Explore Categories
+                </a>
               </div>
-              <div class="flex items-center text-amber-500">
-                <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                <i data-lucide="star" class="w-4 h-4 fill-current opacity-55"></i>
-                <span class="ml-1.5 text-slate-350 font-bold">4.8 Average Rating</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Rotating Quiz Card Preview (Right side) -->
-          <div class="lg:col-span-5 flex justify-center">
-            <div class="w-full max-w-sm glass-card p-6 rounded-2xl shadow-2xl relative border-indigo-500/20">
-              <div class="absolute -top-3.5 -right-3.5 px-3 py-1 bg-amber-500 text-slate-950 font-black text-xs rounded-full shadow-lg">
-                +50 XP
-              </div>
-              <div class="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Active Simulator</span>
-                <span class="text-xs font-bold text-indigo-400 flex items-center gap-1">
-                  <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
-                  Question 1/3
+              <!-- Trust row -->
+              <div class="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-slate-500 text-xs pt-2">
+                <span class="flex items-center gap-1.5"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i> 10,000+ Quizzes Taken</span>
+                <span class="flex items-center gap-1.5"><i data-lucide="users" class="w-4 h-4 text-indigo-500"></i> 5,000+ Active Learners</span>
+                <span class="flex items-center gap-1 text-amber-500">
+                  <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                  <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                  <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                  <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                  <i data-lucide="star" class="w-4 h-4 fill-current opacity-40"></i>
+                  <span class="text-slate-500 ml-1 font-bold">4.8 Rating</span>
                 </span>
               </div>
-              <div class="min-h-[140px] space-y-4">
-                <h3 id="sim-question" class="text-sm sm:text-base font-bold text-slate-200 leading-normal">
-                  Loading...
-                </h3>
-                <div id="sim-options" class="space-y-2">
-                  <!-- options injected via js -->
+            </div>
+
+            <!-- Right: Quiz simulator card -->
+            <div class="lg:col-span-5 flex justify-center">
+              <div class="w-full max-w-sm bg-white/90 backdrop-blur border border-indigo-100 rounded-2xl p-6 shadow-2xl shadow-indigo-100 relative">
+                <div class="absolute -top-3 -right-3 px-3 py-1 bg-amber-400 text-white text-xs font-black rounded-full shadow-md">+50 XP</div>
+                <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+                  <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Live Simulator</span>
+                  <span class="text-[11px] font-bold text-indigo-500 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping inline-block"></span>
+                    Question 1/3
+                  </span>
+                </div>
+                <div class="min-h-[130px] space-y-4">
+                  <h3 id="sim-question" class="text-sm font-bold text-slate-700 leading-normal">Loading...</h3>
+                  <div id="sim-options" class="space-y-2"></div>
                 </div>
               </div>
             </div>
@@ -253,807 +247,643 @@
         </div>
       </div>
 
-      {/* 3. QUICK STATS BAR */}
-      <div class="py-12 border-y border-white/5 bg-slate-950/60">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <p class="text-3xl sm:text-4xl font-black text-white">50K+</p>
-              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Total Users</p>
-            </div>
-            <div>
-              <p class="text-3xl sm:text-4xl font-black text-white">120K+</p>
-              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Completed Quizzes</p>
-            </div>
-            <div>
-              <p class="text-3xl sm:text-4xl font-black text-white">1.5M+</p>
-              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Questions Solved</p>
-            </div>
-            <div>
-              <p class="text-3xl sm:text-4xl font-black text-white">100+</p>
-              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Syllabus Chapters</p>
-            </div>
-          </div>
+      <!-- 2. QUICK STATS BAR -->
+      <div class="py-12 bg-indigo-600">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div><p class="text-3xl sm:text-4xl font-black text-white">50K+</p><p class="text-xs font-semibold text-indigo-200 uppercase tracking-wider mt-1">Total Users</p></div>
+          <div><p class="text-3xl sm:text-4xl font-black text-white">120K+</p><p class="text-xs font-semibold text-indigo-200 uppercase tracking-wider mt-1">Completed Quizzes</p></div>
+          <div><p class="text-3xl sm:text-4xl font-black text-white">1.5M+</p><p class="text-xs font-semibold text-indigo-200 uppercase tracking-wider mt-1">Questions Solved</p></div>
+          <div><p class="text-3xl sm:text-4xl font-black text-white">100+</p><p class="text-xs font-semibold text-indigo-200 uppercase tracking-wider mt-1">Syllabus Chapters</p></div>
         </div>
       </div>
 
-      {/* 4. CATEGORY SHOWCASE */}
+      <!-- 3. CATEGORY SHOWCASE -->
       <div id="categories" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10">
           <div>
-            <h2 class="text-3xl font-extrabold text-white">Explore Quiz Categories</h2>
-            <p class="text-slate-400 mt-2 text-sm">Select your academic grade and begin testing your knowledge.</p>
+            <h2 class="text-3xl font-extrabold text-slate-900">Explore Quiz Categories</h2>
+            <p class="text-slate-500 mt-1 text-sm">Select your grade and begin testing your knowledge.</p>
           </div>
         </div>
-
-        <!-- Grade Selector Buttons -->
-        <div class="flex flex-wrap gap-2.5 mb-8">
-          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-white font-bold text-xs uppercase" data-grade="12">Class 12</button>
-          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs uppercase" data-grade="11">Class 11</button>
-          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs uppercase" data-grade="10">Class 10</button>
-          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs uppercase" data-grade="9">Class 9</button>
+        <!-- Grade filters -->
+        <div class="flex flex-wrap gap-2 mb-8">
+          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-indigo-500 bg-indigo-600 text-white font-bold text-xs uppercase shadow-sm" data-grade="12">Class 12</button>
+          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-500 font-bold text-xs uppercase shadow-sm hover:border-indigo-300" data-grade="11">Class 11</button>
+          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-500 font-bold text-xs uppercase shadow-sm hover:border-indigo-300" data-grade="10">Class 10</button>
+          <button class="grade-filter-btn px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-500 font-bold text-xs uppercase shadow-sm hover:border-indigo-300" data-grade="9">Class 9</button>
         </div>
-
-        <div id="categories-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          <!-- subject/category cards dynamically loaded here -->
-        </div>
+        <div id="categories-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"></div>
       </div>
 
-      {/* 5. FEATURED / TRENDING QUIZZES */}
-      <div id="trending" class="py-20 bg-slate-950/40 border-y border-white/5">
+      <!-- 4. TRENDING QUIZZES -->
+      <div class="py-20 bg-slate-100 border-y border-slate-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10">
             <div>
-              <h2 class="text-3xl font-extrabold text-white">Trending This Week 🔥</h2>
-              <p class="text-slate-400 mt-2 text-sm">Challenge yourself with topics most popular among other peer aspirants.</p>
+              <h2 class="text-3xl font-extrabold text-slate-900">Trending This Week 🔥</h2>
+              <p class="text-slate-500 mt-1 text-sm">Most popular among peer aspirants this week.</p>
             </div>
-            <div class="flex gap-1.5 p-1 rounded-xl bg-slate-900/60 border border-slate-800 mt-4 md:mt-0">
-              <button class="trending-filter active px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-lg" data-tab="Trending">Trending</button>
-              <button class="trending-filter px-4 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white" data-tab="New">New</button>
-              <button class="trending-filter px-4 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white" data-tab="MostPlayed">Most Played</button>
+            <div class="flex gap-1 p-1 rounded-xl bg-white border border-slate-200 mt-4 md:mt-0 shadow-sm">
+              <button class="trending-filter active px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm" data-tab="Trending">Trending</button>
+              <button class="trending-filter px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-700" data-tab="New">New</button>
+              <button class="trending-filter px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-700" data-tab="MostPlayed">Most Played</button>
             </div>
           </div>
-          <div id="trending-quizzes-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            <!-- trending quizzes list -->
-          </div>
+          <div id="trending-quizzes-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"></div>
         </div>
       </div>
 
-      {/* 6. HOW IT WORKS */}
+      <!-- 5. HOW IT WORKS -->
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl font-extrabold text-white">How It Works</h2>
-          <p class="text-slate-400 mt-2 text-sm max-w-md mx-auto">Get started in under a minute and build your knowledge daily.</p>
+        <div class="text-center mb-14">
+          <h2 class="text-3xl font-extrabold text-slate-900">How It Works</h2>
+          <p class="text-slate-500 mt-2 text-sm max-w-sm mx-auto">Get started in under a minute and build your knowledge daily.</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-12 text-center">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-10 text-center">
           <div class="space-y-3">
-            <div class="w-12 h-12 rounded-full border border-indigo-500/20 bg-indigo-500/10 flex items-center justify-center mx-auto text-lg font-black text-indigo-400 shadow-md">1</div>
-            <h4 class="font-bold text-slate-100">Sign Up</h4>
+            <div class="w-12 h-12 rounded-full border-2 border-indigo-200 bg-indigo-50 flex items-center justify-center mx-auto text-lg font-black text-indigo-600">1</div>
+            <h4 class="font-bold text-slate-800">Sign Up</h4>
             <p class="text-slate-500 text-xs leading-normal">Create your student account to record accuracy logs and badges.</p>
           </div>
           <div class="space-y-3">
-            <div class="w-12 h-12 rounded-full border border-indigo-500/20 bg-indigo-500/10 flex items-center justify-center mx-auto text-lg font-black text-indigo-400 shadow-md">2</div>
-            <h4 class="font-bold text-slate-100">Configure & Launch</h4>
+            <div class="w-12 h-12 rounded-full border-2 border-indigo-200 bg-indigo-50 flex items-center justify-center mx-auto text-lg font-black text-indigo-600">2</div>
+            <h4 class="font-bold text-slate-800">Configure &amp; Launch</h4>
             <p class="text-slate-500 text-xs leading-normal">Pick a chapter, choose difficulty, set a timer or practice at your pace.</p>
           </div>
           <div class="space-y-3">
-            <div class="w-12 h-12 rounded-full border border-indigo-500/20 bg-indigo-500/10 flex items-center justify-center mx-auto text-lg font-black text-indigo-400 shadow-md">3</div>
-            <h4 class="font-bold text-slate-100">Earn XP & Badges</h4>
+            <div class="w-12 h-12 rounded-full border-2 border-indigo-200 bg-indigo-50 flex items-center justify-center mx-auto text-lg font-black text-indigo-600">3</div>
+            <h4 class="font-bold text-slate-800">Earn XP &amp; Badges</h4>
             <p class="text-slate-500 text-xs leading-normal">Get instant explanations per question and unlock achievement tiers.</p>
           </div>
           <div class="space-y-3">
-            <div class="w-12 h-12 rounded-full border border-indigo-500/20 bg-indigo-500/10 flex items-center justify-center mx-auto text-lg font-black text-indigo-400 shadow-md">4</div>
-            <h4 class="font-bold text-slate-100">Climb Leaderboard</h4>
-            <p class="text-slate-500 text-xs leading-normal">Compete in the weekly tournament bracket to win Diamond Division status.</p>
+            <div class="w-12 h-12 rounded-full border-2 border-indigo-200 bg-indigo-50 flex items-center justify-center mx-auto text-lg font-black text-indigo-600">4</div>
+            <h4 class="font-bold text-slate-800">Climb Leaderboard</h4>
+            <p class="text-slate-500 text-xs leading-normal">Compete in the weekly bracket to win Diamond Division status.</p>
           </div>
         </div>
       </div>
 
-      {/* 7. LIVE LEADERBOARD PREVIEW */}
-      <div id="leaderboard-preview-sec" class="py-20 bg-slate-950/40 border-y border-white/5">
-        <div class="max-w-4xl mx-auto px-4">
-          <div class="text-center mb-12">
-            <h2 class="text-3xl font-extrabold text-white">This Week's Top Performers</h2>
-            <p class="text-slate-400 mt-2 text-sm font-semibold">Join the league and compete against top students nationwide.</p>
+      <!-- 6. LIVE LEADERBOARD PREVIEW -->
+      <div class="py-20 bg-slate-100 border-y border-slate-200">
+        <div class="max-w-3xl mx-auto px-4">
+          <div class="text-center mb-10">
+            <h2 class="text-3xl font-extrabold text-slate-900">This Week's Top Performers</h2>
+            <p class="text-slate-500 mt-1 text-sm">Join the league and compete against top students.</p>
           </div>
-          <div class="glass-card rounded-2xl overflow-hidden shadow-2xl border-white/5">
-            <div id="landing-leaderboard-list" class="divide-y divide-slate-900">
-              <!-- top users rendered via js -->
-            </div>
+          <div class="card rounded-2xl overflow-hidden">
+            <div id="landing-leaderboard-list" class="divide-y divide-slate-100"></div>
           </div>
           <div class="text-center mt-8">
-            <a href="#leaderboard" class="inline-flex items-center gap-2 px-6 py-3 border border-white/5 bg-slate-900/60 hover:bg-slate-900 text-slate-300 font-bold rounded-xl text-sm transition-all select-none">
+            <a href="#leaderboard" class="inline-flex items-center gap-2 px-6 py-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm shadow-sm transition-all">
               View Full Leaderboard <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
           </div>
         </div>
       </div>
 
-      {/* 8. GAMIFICATION TEASER */}
+      <!-- 7. GAMIFICATION TEASER -->
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div class="glass-card p-8 md:p-12 rounded-3xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center border-indigo-500/10">
+        <div class="card p-8 md:p-12 rounded-3xl grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div class="lg:col-span-7 space-y-5">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold uppercase tracking-wider">
-              <i data-lucide="flame" class="w-3.5 h-3.5"></i> Gamified Progression
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold uppercase tracking-wider">
+              🎮 Gamified Progression
             </div>
-            <h2 class="text-3xl font-extrabold text-white">XP, badges, streaks, and divisions.</h2>
-            <p class="text-slate-400 text-sm leading-relaxed max-w-md">
-              EduQuiz rewards consistency. Solve questions to gather coins, purchase streak-freezes, unlock custom titles, and compete inside tiered leagues (Bronze, Silver, Gold, Platinum, Diamond).
+            <h2 class="text-3xl font-extrabold text-slate-900">XP, badges, streaks, and divisions.</h2>
+            <p class="text-slate-500 text-sm leading-relaxed max-w-md">
+              EduQuiz rewards consistency. Solve questions to gather coins, purchase streak-freezes, unlock custom titles, and compete inside tiered leagues (Bronze → Diamond).
             </p>
             <div class="flex flex-wrap gap-6 pt-2">
               <div class="flex items-center gap-3">
-                <span class="w-9 h-9 rounded-lg bg-slate-950 flex items-center justify-center text-lg">🔥</span>
-                <div>
-                  <p class="text-xs font-bold text-slate-200">Daily Streaks</p>
-                  <p class="text-[10px] text-slate-500 leading-none mt-0.5">Duolingo-style tracker</p>
-                </div>
+                <span class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-lg">🔥</span>
+                <div><p class="text-xs font-bold text-slate-700">Daily Streaks</p><p class="text-[10px] text-slate-400 mt-0.5">Duolingo-style tracker</p></div>
               </div>
               <div class="flex items-center gap-3">
-                <span class="w-9 h-9 rounded-lg bg-slate-950 flex items-center justify-center text-lg">🏆</span>
-                <div>
-                  <p class="text-xs font-bold text-slate-200">25+ Achievements</p>
-                  <p class="text-[10px] text-slate-500 leading-none mt-0.5">Collect rare badges</p>
-                </div>
+                <span class="w-9 h-9 rounded-xl bg-yellow-50 border border-yellow-100 flex items-center justify-center text-lg">🏆</span>
+                <div><p class="text-xs font-bold text-slate-700">25+ Achievements</p><p class="text-[10px] text-slate-400 mt-0.5">Collect rare badges</p></div>
               </div>
             </div>
           </div>
-          <div class="lg:col-span-5 grid grid-cols-3 gap-4">
-            <div class="glass-card p-4 rounded-xl text-center space-y-1.5 border-white/5 flex flex-col items-center">
-              <span class="text-2xl">⚡</span>
-              <p class="text-[10px] font-black text-slate-200">Speed Demon</p>
-            </div>
-            <div class="glass-card p-4 rounded-xl text-center space-y-1.5 border-white/5 flex flex-col items-center">
-              <span class="text-2xl">💯</span>
-              <p class="text-[10px] font-black text-slate-200">Perfect Score</p>
-            </div>
-            <div class="glass-card p-4 rounded-xl text-center space-y-1.5 border-white/5 flex flex-col items-center">
-              <span class="text-2xl">👑</span>
-              <p class="text-[10px] font-black text-slate-200">Streak King</p>
-            </div>
-            <div class="glass-card p-4 rounded-xl text-center space-y-1.5 border-white/5 flex flex-col items-center">
-              <span class="text-2xl">🧠</span>
-              <p class="text-[10px] font-black text-slate-200">NEET Expert</p>
-            </div>
-            <div class="glass-card p-4 rounded-xl text-center space-y-1.5 border-white/5 flex flex-col items-center">
-              <span class="text-2xl">🎯</span>
-              <p class="text-[10px] font-black text-slate-200">Pure Accuracy</p>
-            </div>
-            <div class="glass-card p-4 rounded-xl text-center space-y-1.5 border-white/5 flex flex-col items-center">
-              <span class="text-2xl">🛡️</span>
-              <p class="text-[10px] font-black text-slate-200">Ad Shield</p>
-            </div>
+          <div class="lg:col-span-5 grid grid-cols-3 gap-3">
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center flex flex-col items-center gap-1.5"><span class="text-2xl">⚡</span><p class="text-[10px] font-black text-slate-600">Speed Demon</p></div>
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center flex flex-col items-center gap-1.5"><span class="text-2xl">💯</span><p class="text-[10px] font-black text-slate-600">Perfect Score</p></div>
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center flex flex-col items-center gap-1.5"><span class="text-2xl">👑</span><p class="text-[10px] font-black text-slate-600">Streak King</p></div>
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center flex flex-col items-center gap-1.5"><span class="text-2xl">🧠</span><p class="text-[10px] font-black text-slate-600">NEET Expert</p></div>
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center flex flex-col items-center gap-1.5"><span class="text-2xl">🎯</span><p class="text-[10px] font-black text-slate-600">Pure Accuracy</p></div>
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center flex flex-col items-center gap-1.5"><span class="text-2xl">🛡️</span><p class="text-[10px] font-black text-slate-600">Ad Shield</p></div>
           </div>
         </div>
       </div>
 
-      {/* 9. TESTIMONIALS */}
-      <div class="py-20 bg-slate-950/40 border-y border-white/5">
+      <!-- 8. TESTIMONIALS -->
+      <div class="py-20 bg-slate-100 border-y border-slate-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="text-center mb-16">
-            <h2 class="text-3xl font-extrabold text-white">What Our Top Performers Say</h2>
-            <p class="text-slate-400 mt-2 text-sm max-w-sm mx-auto">Read how students are utilizing EduQuiz to clear exams.</p>
+          <div class="text-center mb-14">
+            <h2 class="text-3xl font-extrabold text-slate-900">What Our Top Performers Say</h2>
+            <p class="text-slate-500 mt-2 text-sm">Read how students are utilizing EduQuiz to clear exams.</p>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
-              <p class="text-slate-350 text-sm leading-relaxed italic">"The NEET levels in Biology quizzes are exactly like the actual examinations. My concept clarity has increased immensely."</p>
-              <div class="flex items-center gap-3 mt-8">
-                <span class="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 font-bold flex items-center justify-center">K</span>
-                <div>
-                  <p class="text-sm font-bold text-slate-200">Ketan Verma</p>
-                  <p class="text-[10px] text-slate-500">NEET aspirant, Score: 98%</p>
-                </div>
+            <div class="card p-6 rounded-2xl flex flex-col justify-between">
+              <p class="text-slate-600 text-sm leading-relaxed italic">"The NEET-level Biology quizzes are exactly like the actual examinations. My concept clarity has increased immensely."</p>
+              <div class="flex items-center gap-3 mt-8 pt-6 border-t border-slate-100">
+                <span class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center">K</span>
+                <div><p class="text-sm font-bold text-slate-800">Ketan Verma</p><p class="text-[11px] text-slate-400">NEET aspirant · 98%ile</p></div>
               </div>
             </div>
-            <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
-              <p class="text-slate-350 text-sm leading-relaxed italic">"I love competing on the weekly bracket! The XP rewards and achievements make studying feel like a high-end mobile game."</p>
-              <div class="flex items-center gap-3 mt-8">
-                <span class="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 font-bold flex items-center justify-center">S</span>
-                <div>
-                  <p class="text-sm font-bold text-slate-200">Shreya Gupta</p>
-                  <p class="text-[10px] text-slate-500">Class 12 Chemistry, Score: 95%</p>
-                </div>
+            <div class="card p-6 rounded-2xl flex flex-col justify-between">
+              <p class="text-slate-600 text-sm leading-relaxed italic">"I love competing on the weekly bracket! The XP rewards and achievements make studying feel like a high-end mobile game."</p>
+              <div class="flex items-center gap-3 mt-8 pt-6 border-t border-slate-100">
+                <span class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 font-bold flex items-center justify-center">S</span>
+                <div><p class="text-sm font-bold text-slate-800">Shreya Gupta</p><p class="text-[11px] text-slate-400">Class 12 Chemistry · 95%</p></div>
               </div>
             </div>
-            <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
-              <p class="text-slate-350 text-sm leading-relaxed italic">"Highly recommend for board revisions. Numerical quizzes in electrochemistry have extensive formula solutions included!"</p>
-              <div class="flex items-center gap-3 mt-8">
-                <span class="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 font-bold flex items-center justify-center">A</span>
-                <div>
-                  <p class="text-sm font-bold text-slate-200">Arjun Malhotra</p>
-                  <p class="text-[10px] text-slate-500">Class 12 Physics, Score: 92%</p>
-                </div>
+            <div class="card p-6 rounded-2xl flex flex-col justify-between">
+              <p class="text-slate-600 text-sm leading-relaxed italic">"Highly recommend for board revisions. Numerical quizzes in Electrochemistry have extensive formula solutions!"</p>
+              <div class="flex items-center gap-3 mt-8 pt-6 border-t border-slate-100">
+                <span class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 font-bold flex items-center justify-center">A</span>
+                <div><p class="text-sm font-bold text-slate-800">Arjun Malhotra</p><p class="text-[11px] text-slate-400">Class 12 Physics · 92%</p></div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 10. PRICING TEASER */}
-      <div id="pricing" class="max-w-5xl mx-auto px-4 py-20">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl font-extrabold text-white">Simple, transparent pricing</h2>
-          <p class="text-slate-400 mt-2 text-sm">Start practicing for free, or unlock advanced features.</p>
+      <!-- 9. PRICING -->
+      <div id="pricing" class="max-w-4xl mx-auto px-4 py-20">
+        <div class="text-center mb-14">
+          <h2 class="text-3xl font-extrabold text-slate-900">Simple, transparent pricing</h2>
+          <p class="text-slate-500 mt-2 text-sm">Start practicing for free, or unlock advanced features.</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-          <div class="glass-card p-8 rounded-2xl flex flex-col justify-between border-slate-800">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="card p-8 rounded-2xl flex flex-col justify-between">
             <div>
-              <h3 class="text-xl font-bold text-white">Free Plan</h3>
-              <p class="text-slate-500 text-xs mt-2">Standard self-assessments.</p>
-              <div class="my-6">
-                <span class="text-4xl font-extrabold text-white">₹0</span>
-                <span class="text-slate-500 text-sm">/ forever</span>
-              </div>
-              <ul class="space-y-3.5 text-sm text-slate-400">
-                <li class="flex items-center gap-2">✓ Access to standard MCQs</li>
-                <li class="flex items-center gap-2">✓ Chapterwise selection limits</li>
-                <li className="flex items-center gap-2">✓ Standard leaderboard lists</li>
+              <h3 class="text-xl font-bold text-slate-800">Free Plan</h3>
+              <p class="text-slate-400 text-xs mt-1">Standard self-assessments, forever free.</p>
+              <div class="my-6"><span class="text-4xl font-extrabold text-slate-900">₹0</span><span class="text-slate-400 text-sm ml-1">/ forever</span></div>
+              <ul class="space-y-3 text-sm text-slate-600">
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Access to standard MCQs</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Chapterwise selection</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Standard leaderboard</li>
               </ul>
             </div>
-            <div class="mt-8 pt-6 border-t border-slate-900">
-              <a href="#signup" class="w-full block py-3 rounded-xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900 text-center text-sm font-bold text-slate-350 transition-all select-none">Get Started</a>
-            </div>
+            <a href="#signup" class="mt-8 block w-full py-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-center text-sm font-bold text-slate-600 transition-all">Get Started Free</a>
           </div>
-          <div class="glass-card p-8 rounded-2xl flex flex-col justify-between border-indigo-500/30 bg-indigo-950/5 relative shadow-xl shadow-indigo-600/5">
-            <span class="absolute -top-3 right-6 px-2.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-black tracking-wider uppercase">Best Value</span>
+          <div class="card p-8 rounded-2xl flex flex-col justify-between relative border-indigo-300 shadow-lg shadow-indigo-50">
+            <span class="absolute -top-3 right-6 px-3 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-black tracking-wider uppercase shadow-md">Best Value</span>
             <div>
-              <h3 class="text-xl font-bold text-white">Premium Plan</h3>
-              <p class="text-indigo-400 text-xs mt-2">For serious board & competitive preparation.</p>
-              <div class="my-6">
-                <span class="text-4xl font-extrabold text-white">₹199</span>
-                <span class="text-slate-500 text-sm">/ month</span>
-              </div>
-              <ul class="space-y-3.5 text-sm text-slate-300">
-                <li class="flex items-center gap-2 text-indigo-300">★ Unlimited daily quizzes</li>
-                <li class="flex items-center gap-2">✓ Detailed time-spent analysis heatmap</li>
-                <li class="flex items-center gap-2">✓ Daily Streak Freeze (Duolingo Style)</li>
-                <li class="flex items-center gap-2">✓ Real-time 1v1 live multiplayer matching</li>
-                <li class="flex items-center gap-2">✓ Downloadable PDF scorecards</li>
+              <h3 class="text-xl font-bold text-indigo-700">Premium Plan</h3>
+              <p class="text-indigo-400 text-xs mt-1">For serious board &amp; competitive preparation.</p>
+              <div class="my-6"><span class="text-4xl font-extrabold text-slate-900">₹199</span><span class="text-slate-400 text-sm ml-1">/ month</span></div>
+              <ul class="space-y-3 text-sm text-slate-600">
+                <li class="flex items-center gap-2 text-indigo-600 font-semibold"><i data-lucide="zap" class="w-4 h-4"></i> Unlimited daily quizzes</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Accuracy heatmap analytics</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Daily streak freeze</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> 1v1 live multiplayer matching</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Downloadable PDF scorecards</li>
               </ul>
             </div>
-            <div class="mt-8 pt-6 border-t border-slate-900">
-              <a href="#signup" class="w-full block py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-center text-sm font-bold text-white shadow-lg shadow-indigo-600/30 transition-all select-none">Upgrade Now</a>
-            </div>
+            <a href="#signup" class="mt-8 block w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-center text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all">Upgrade Now</a>
           </div>
         </div>
       </div>
 
-      {/* 11. FAQ SECTION */}
-      <div id="faq" class="py-20 bg-slate-950/40 border-y border-white/5">
+      <!-- 10. FAQ -->
+      <div class="py-20 bg-slate-100 border-y border-slate-200">
         <div class="max-w-3xl mx-auto px-4">
-          <div class="text-center mb-16">
-            <h2 class="text-3xl font-extrabold text-white">Frequently Asked Questions</h2>
-            <p class="text-slate-400 mt-2 text-sm">Everything you need to know about the platform.</p>
+          <div class="text-center mb-12">
+            <h2 class="text-3xl font-extrabold text-slate-900">Frequently Asked Questions</h2>
+            <p class="text-slate-500 mt-2 text-sm">Everything you need to know.</p>
           </div>
-          <div class="space-y-4" id="faq-accordion-group">
-            <!-- accordion items rendered via js -->
-          </div>
+          <div id="faq-accordion-group" class="space-y-3"></div>
         </div>
       </div>
 
-      {/* 12. FINAL CTA BANNER */}
-      <div class="max-w-5xl mx-auto px-4 py-24">
-        <div class="glass-card p-10 md:p-16 rounded-3xl text-center space-y-6 border-indigo-500/20 bg-gradient-to-br from-indigo-950/10 to-transparent relative overflow-hidden">
-          <h2 class="text-3xl sm:text-4xl font-extrabold text-white relative z-10 leading-tight">Ready to Test Your Conceptual Clarity?</h2>
-          <p class="text-slate-400 text-sm max-w-sm mx-auto relative z-10">Log in using email or social authentication in 1 tap, complete onboarding, and play your first quiz.</p>
-          <div class="relative z-10 pt-4">
-            <a href="#signup" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all inline-flex items-center gap-1.5 select-none hover:scale-[1.03]">
-              Get Started for Free <i data-lucide="chevron-right" class="w-4 h-4"></i>
-            </a>
-          </div>
+      <!-- 11. FINAL CTA -->
+      <div class="max-w-4xl mx-auto px-4 py-24">
+        <div class="bg-indigo-600 p-10 md:p-16 rounded-3xl text-center space-y-6 shadow-2xl shadow-indigo-200">
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight">Ready to Test Your Conceptual Clarity?</h2>
+          <p class="text-indigo-200 text-sm max-w-sm mx-auto">Log in using email or social auth in 1 tap, complete onboarding, and play your first quiz.</p>
+          <a href="#signup" class="inline-flex items-center gap-2 px-8 py-4 bg-white hover:bg-indigo-50 text-indigo-700 font-bold rounded-xl shadow-lg transition-all hover:scale-[1.02]">
+            Get Started for Free <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </a>
         </div>
       </div>
 
-      {/* 13. FOOTER */}
-      <footer class="bg-slate-950/90 border-t border-white/5 py-16 px-4">
-        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div class="space-y-4">
-            <span class="text-2xl font-black bg-gradient-to-r from-indigo-300 via-indigo-500 to-purple-500 bg-clip-text text-transparent">EduQuiz</span>
-            <p class="text-slate-500 text-xs leading-normal">
-              High-converting, gamified concept testing platform for modern boards and exam preparation.
-            </p>
+      <!-- 12. FOOTER -->
+      <footer class="bg-slate-900 text-slate-400 py-16 px-4">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
+          <div class="space-y-3">
+            <span class="text-xl font-black bg-gradient-to-r from-indigo-300 to-purple-400 bg-clip-text text-transparent">EduQuiz</span>
+            <p class="text-sm text-slate-500 leading-normal">Gamified concept testing platform for modern boards and competitive exam preparation.</p>
           </div>
           <div>
-            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-350 mb-4">Product</h4>
-            <ul class="space-y-2.5 text-xs text-slate-500">
-              <li><a href="#home#categories" class="hover:text-white transition-colors">Categories</a></li>
+            <h4 class="text-xs font-bold uppercase tracking-widest text-slate-300 mb-4">Product</h4>
+            <ul class="space-y-2.5 text-sm">
+              <li><a href="#home" class="hover:text-white transition-colors">Categories</a></li>
               <li><a href="#leaderboard" class="hover:text-white transition-colors">Leaderboards</a></li>
-              <li><a href="#home#pricing" class="hover:text-white transition-colors">Pricing Options</a></li>
+              <li><a href="#home" class="hover:text-white transition-colors">Pricing</a></li>
             </ul>
           </div>
           <div>
-            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-350 mb-4">Company</h4>
-            <ul class="space-y-2.5 text-xs text-slate-500">
+            <h4 class="text-xs font-bold uppercase tracking-widest text-slate-300 mb-4">Company</h4>
+            <ul class="space-y-2.5 text-sm">
               <li><a href="#" class="hover:text-white transition-colors">About Us</a></li>
               <li><a href="#" class="hover:text-white transition-colors">Contact Support</a></li>
               <li><a href="#" class="hover:text-white transition-colors">System Status</a></li>
             </ul>
           </div>
           <div>
-            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-350 mb-4">Newsletter</h4>
-            <p class="text-slate-500 text-xs mb-4">Get updates on new chapters & syllabus guides.</p>
+            <h4 class="text-xs font-bold uppercase tracking-widest text-slate-300 mb-4">Newsletter</h4>
+            <p class="text-sm text-slate-500 mb-3">Get updates on new chapters and syllabus guides.</p>
             <div class="flex gap-2">
-              <input type="email" placeholder="name@email.com" class="flex-grow px-3 py-2 text-xs border border-white/5 bg-slate-900/60 rounded-lg text-slate-350 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <input type="email" placeholder="name@email.com" class="flex-grow px-3 py-2 text-xs border border-slate-700 bg-slate-800 text-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder-slate-600">
               <button class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors">Subscribe</button>
             </div>
           </div>
         </div>
-        <div class="max-w-7xl mx-auto mt-16 pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-650">
+        <div class="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-600">
           <p>© 2026 EduQuiz. All rights reserved.</p>
-          <div class="flex gap-6 mt-4 sm:mt-0">
-            <a href="#" class="hover:text-slate-400">Privacy Policy</a>
-            <a href="#" class="hover:text-slate-400">Terms of Use</a>
+          <div class="flex gap-6 mt-3 sm:mt-0">
+            <a href="#" class="hover:text-slate-300">Privacy Policy</a>
+            <a href="#" class="hover:text-slate-300">Terms of Use</a>
           </div>
         </div>
       </footer>
-    </section>
 
-    <!-- ==========================================
-         LOGIN VIEW (#login)
-         ========================================== -->
+    </section><!-- end home-view -->
+
+
+    <!-- ======================================
+         LOGIN VIEW  (#login)
+         ====================================== -->
     <section id="login-view" class="view-section py-20 px-4">
-      <div class="w-full max-w-md mx-auto space-y-8 glass-card p-8 rounded-2xl shadow-2xl relative">
-        <div class="text-center">
-          <h2 class="text-4xl font-extrabold tracking-tight font-display gradient-text bg-gradient-to-r from-indigo-300 via-indigo-500 to-purple-500 bg-clip-text text-transparent">Sign In</h2>
-          <p class="mt-2 text-xs text-slate-400">Welcome back! Sign in to keep tracking your XP and streaks.</p>
-        </div>
-        <form class="space-y-5" id="login-form">
-          <div class="space-y-4">
+      <div class="w-full max-w-md mx-auto">
+        <div class="card p-8 rounded-2xl shadow-xl">
+          <div class="text-center mb-8">
+            <h2 class="text-3xl font-black font-display bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Sign In</h2>
+            <p class="mt-1.5 text-sm text-slate-500">Welcome back! Sign in to keep tracking your progress.</p>
+          </div>
+          <form id="login-form" class="space-y-5">
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Email Address</label>
-              <input type="email" id="login-email" required class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm" placeholder="name@example.com">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Email Address</label>
+              <input type="email" id="login-email" required class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400" placeholder="name@example.com">
             </div>
             <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Password</label>
-                <a href="#forgot-password" class="text-xs font-semibold text-indigo-400 hover:text-indigo-350">Forgot Password?</a>
+              <div class="flex justify-between mb-1.5">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Password</label>
+                <a href="#forgot-password" class="text-xs font-semibold text-indigo-600 hover:text-indigo-500">Forgot?</a>
               </div>
-              <input type="password" id="login-password" required class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm" placeholder="••••••••">
+              <input type="password" id="login-password" required class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400" placeholder="••••••••">
             </div>
+            <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-100 transition-all">Sign In</button>
+          </form>
+          <div class="relative flex items-center my-5">
+            <div class="flex-grow border-t border-slate-200"></div>
+            <span class="flex-shrink mx-3 text-xs text-slate-400 font-semibold uppercase">Or</span>
+            <div class="flex-grow border-t border-slate-200"></div>
           </div>
-          <button type="submit" class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/10">Sign In</button>
-        </form>
-        <div class="relative flex py-2 items-center">
-          <div class="flex-grow border-t border-slate-900"></div>
-          <span class="flex-shrink mx-4 text-slate-500 text-xs font-bold uppercase">Or continue with</span>
-          <div class="flex-grow border-t border-slate-900"></div>
-        </div>
-        <button id="google-login-btn" class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-white/5 bg-slate-900/30 hover:bg-slate-900/60 text-slate-300 rounded-xl text-sm font-semibold transition-all">
-          <span>🌐</span> Google (One-Tap Mock)
-        </button>
-        <div class="text-center text-xs text-slate-400 mt-6">
-          Don't have an account? <a href="#signup" class="font-bold text-indigo-400 hover:text-indigo-350">Create account</a>
+          <button id="google-login-btn" class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold transition-all">
+            🌐 Continue with Google
+          </button>
+          <p class="text-center text-sm text-slate-500 mt-6">Don't have an account? <a href="#signup" class="font-bold text-indigo-600 hover:text-indigo-500">Sign up free</a></p>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SIGNUP VIEW (#signup)
-         ========================================== -->
+
+    <!-- ======================================
+         SIGNUP VIEW  (#signup)
+         ====================================== -->
     <section id="signup-view" class="view-section py-20 px-4">
-      <div class="w-full max-w-md mx-auto space-y-8 glass-card p-8 rounded-2xl shadow-2xl relative">
-        <div class="text-center">
-          <h2 class="text-4xl font-extrabold tracking-tight font-display bg-gradient-to-r from-indigo-300 via-indigo-500 to-purple-500 bg-clip-text text-transparent">Sign Up</h2>
-          <p class="mt-2 text-xs text-slate-400">Join EduQuiz and start mastering your studies today.</p>
-        </div>
-        <form class="space-y-5" id="signup-form">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Full Name</label>
-              <input type="text" id="signup-name" required class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm" placeholder="John Doe">
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Email Address</label>
-              <input type="email" id="signup-email" required class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm" placeholder="name@example.com">
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
-              <input type="password" id="signup-password" required class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm" placeholder="Min. 6 characters">
-            </div>
+      <div class="w-full max-w-md mx-auto">
+        <div class="card p-8 rounded-2xl shadow-xl">
+          <div class="text-center mb-8">
+            <h2 class="text-3xl font-black font-display bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Create Account</h2>
+            <p class="mt-1.5 text-sm text-slate-500">Join EduQuiz and start mastering your studies today.</p>
           </div>
-          <button type="submit" class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/10">Register Account</button>
-        </form>
-        <div class="text-center text-xs text-slate-400 mt-6">
-          Already have an account? <a href="#login" class="font-bold text-indigo-400 hover:text-indigo-350">Sign In</a>
+          <form id="signup-form" class="space-y-5">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Full Name</label>
+              <input type="text" id="signup-name" required class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="John Doe">
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Email Address</label>
+              <input type="email" id="signup-email" required class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="name@example.com">
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Password</label>
+              <input type="password" id="signup-password" required class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="Minimum 6 characters">
+            </div>
+            <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-100 transition-all">Register Account</button>
+          </form>
+          <p class="text-center text-sm text-slate-500 mt-6">Already have an account? <a href="#login" class="font-bold text-indigo-600 hover:text-indigo-500">Sign in</a></p>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         FORGOT PASSWORD VIEW (#forgot-password)
-         ========================================== -->
+
+    <!-- ======================================
+         FORGOT PASSWORD VIEW  (#forgot-password)
+         ====================================== -->
     <section id="forgot-password-view" class="view-section py-20 px-4">
-      <div class="w-full max-w-md mx-auto space-y-8 glass-card p-8 rounded-2xl shadow-2xl relative">
-        <div class="text-center">
-          <h2 class="text-3xl font-extrabold tracking-tight font-display bg-gradient-to-r from-indigo-300 via-indigo-500 to-purple-500 bg-clip-text text-transparent">Reset Password</h2>
-          <p class="mt-2 text-xs text-slate-400">Enter your registered email and we'll send a password recovery code.</p>
-        </div>
-        <form class="space-y-5" id="forgot-form">
-          <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Email Address</label>
-            <input type="email" id="forgot-email" required class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm" placeholder="name@example.com">
+      <div class="w-full max-w-md mx-auto">
+        <div class="card p-8 rounded-2xl shadow-xl">
+          <div class="text-center mb-8">
+            <h2 class="text-2xl font-black font-display text-slate-900">Reset Password</h2>
+            <p class="mt-1.5 text-sm text-slate-500">Enter your email and we'll send reset instructions.</p>
           </div>
-          <button type="submit" class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/10">Send Reset Instructions</button>
-        </form>
-        <div class="text-center mt-6">
-          <a href="#login" class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-350">
-            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Login
-          </a>
+          <form id="forgot-form" class="space-y-5">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Email Address</label>
+              <input type="email" id="forgot-email" required class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="name@example.com">
+            </div>
+            <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-100 transition-all">Send Reset Link</button>
+          </form>
+          <div class="text-center mt-6">
+            <a href="#login" class="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-500">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Login
+            </a>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         ONBOARDING MODAL/OVERLAY
-         ========================================== -->
-    <div id="onboard-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div class="w-full max-w-xl glass-card p-8 rounded-3xl shadow-2xl space-y-6">
+
+    <!-- ======================================
+         ONBOARDING MODAL
+         ====================================== -->
+    <div id="onboard-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div class="w-full max-w-xl bg-white rounded-3xl shadow-2xl p-8 space-y-6">
         <div class="text-center space-y-2">
           <span class="text-3xl">✨</span>
-          <h2 class="text-3xl font-black bg-gradient-to-r from-indigo-300 to-purple-400 bg-clip-text text-transparent">Setup Your Learning Profile</h2>
-          <p class="text-slate-400 text-xs">Let's customize your EduQuiz dashboard parameters.</p>
+          <h2 class="text-2xl font-black text-slate-900">Setup Your Learning Profile</h2>
+          <p class="text-slate-500 text-sm">Customize your EduQuiz experience in 30 seconds.</p>
         </div>
         <form id="onboard-form" class="space-y-6">
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Select a Username</label>
-            <input type="text" id="onboard-username" required class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 text-sm" placeholder="e.g. bio_champ">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Choose a Username</label>
+            <input type="text" id="onboard-username" required class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="e.g. bio_champ">
           </div>
-
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Select Your Skill Level</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Skill Level</label>
             <div class="grid grid-cols-3 gap-3">
-              <label class="border border-white/5 bg-slate-900/40 hover:bg-slate-900/60 p-3 rounded-xl flex flex-col text-left cursor-pointer transition-all" id="level-btn-beginner">
+              <label class="border-2 border-indigo-500 bg-indigo-50 p-3 rounded-xl cursor-pointer" id="level-btn-beginner">
                 <input type="radio" name="onboard-level" value="BEGINNER" checked class="hidden">
-                <span class="text-xs font-bold text-slate-200">Beginner</span>
-                <span class="text-[9px] text-slate-500 leading-none mt-1">Class level basics</span>
+                <p class="text-xs font-bold text-indigo-700">Beginner</p>
+                <p class="text-[9px] text-indigo-400 mt-0.5">Class level basics</p>
               </label>
-              <label class="border border-white/5 bg-slate-900/40 hover:bg-slate-900/60 p-3 rounded-xl flex flex-col text-left cursor-pointer transition-all" id="level-btn-intermediate">
+              <label class="border border-slate-200 bg-slate-50 p-3 rounded-xl cursor-pointer hover:border-indigo-300" id="level-btn-intermediate">
                 <input type="radio" name="onboard-level" value="INTERMEDIATE" class="hidden">
-                <span class="text-xs font-bold text-slate-200">Intermediate</span>
-                <span class="text-[9px] text-slate-500 leading-none mt-1">Aspirants & Revisions</span>
+                <p class="text-xs font-bold text-slate-700">Intermediate</p>
+                <p class="text-[9px] text-slate-400 mt-0.5">Revisions & Aspirants</p>
               </label>
-              <label class="border border-white/5 bg-slate-900/40 hover:bg-slate-900/60 p-3 rounded-xl flex flex-col text-left cursor-pointer transition-all" id="level-btn-advanced">
+              <label class="border border-slate-200 bg-slate-50 p-3 rounded-xl cursor-pointer hover:border-indigo-300" id="level-btn-advanced">
                 <input type="radio" name="onboard-level" value="ADVANCED" class="hidden">
-                <span class="text-xs font-bold text-slate-200">Advanced</span>
-                <span class="text-[9px] text-slate-500 leading-none mt-1">JEE / NEET Prep</span>
+                <p class="text-xs font-bold text-slate-700">Advanced</p>
+                <p class="text-[9px] text-slate-400 mt-0.5">JEE / NEET Prep</p>
               </label>
             </div>
           </div>
-
-          <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Choose Favorite Subjects (Select multiple)</label>
-            <div class="flex flex-wrap gap-2" id="onboard-subjects-container">
-              <!-- subject chips -->
-            </div>
-          </div>
-
-          <button type="submit" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-600/10">Complete Onboarding</button>
+          <button type="submit" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-100">Complete Setup</button>
         </form>
       </div>
     </div>
 
-    <!-- ==========================================
-         USER DASHBOARD (#dashboard)
-         ========================================== -->
+
+    <!-- ======================================
+         DASHBOARD VIEW  (#dashboard)
+         ====================================== -->
     <section id="dashboard-view" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <!-- Welcome Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 border-b border-white/5 pb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-6 border-b border-slate-200">
         <div>
-          <h2 class="text-3xl font-black text-white" id="dashboard-welcome">Hello Student!</h2>
-          <p class="text-slate-400 text-xs mt-1">Your weekly streak is looking solid. Check your analytics below.</p>
+          <h2 class="text-3xl font-black text-slate-900" id="dashboard-welcome">Hello, Student!</h2>
+          <p class="text-slate-500 text-sm mt-1">Your streak is looking great. Check your analytics below.</p>
         </div>
         <div class="flex items-center gap-3 mt-4 sm:mt-0">
-          <a href="#home#categories" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/10 select-none">Take A Quiz</a>
-          <button id="dashboard-edit-profile" class="px-5 py-2.5 rounded-xl border border-white/5 bg-slate-900/60 hover:bg-slate-900 text-slate-350 font-bold text-xs select-none">Edit Profile</button>
+          <a href="#home" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-100">Take A Quiz</a>
+          <button id="dashboard-edit-profile" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs">Edit Profile</button>
         </div>
       </div>
 
-      <!-- Overview Cards Grid -->
+      <!-- Stats cards -->
       <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div class="glass-card p-5 rounded-2xl border-white/5 space-y-2">
-          <span class="text-2xl">📝</span>
-          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Total Quizzes</p>
-          <p class="text-2xl font-black text-white" id="stat-quizzes">0</p>
-        </div>
-        <div class="glass-card p-5 rounded-2xl border-white/5 space-y-2">
-          <span class="text-2xl">🎯</span>
-          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Avg Accuracy</p>
-          <p class="text-2xl font-black text-white" id="stat-accuracy">0%</p>
-        </div>
-        <div class="glass-card p-5 rounded-2xl border-white/5 space-y-2">
-          <span class="text-2xl">🔥</span>
-          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Streak Days</p>
-          <p class="text-2xl font-black text-white" id="stat-streak">0</p>
-        </div>
-        <div class="glass-card p-5 rounded-2xl border-white/5 space-y-2">
-          <span class="text-2xl">✨</span>
-          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">XP Points</p>
-          <p class="text-2xl font-black text-white" id="stat-xp">0</p>
-        </div>
-        <div class="glass-card p-5 rounded-2xl border-white/5 col-span-2 md:col-span-1 space-y-2">
-          <span class="text-2xl">👑</span>
-          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Global Rank</p>
-          <p class="text-2xl font-black text-white" id="stat-rank">#--</p>
-        </div>
+        <div class="card p-5 rounded-2xl space-y-1.5"><span class="text-2xl">📝</span><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Quizzes</p><p class="text-2xl font-black text-slate-900" id="stat-quizzes">0</p></div>
+        <div class="card p-5 rounded-2xl space-y-1.5"><span class="text-2xl">🎯</span><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Accuracy</p><p class="text-2xl font-black text-slate-900" id="stat-accuracy">0%</p></div>
+        <div class="card p-5 rounded-2xl space-y-1.5"><span class="text-2xl">🔥</span><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Streak Days</p><p class="text-2xl font-black text-slate-900" id="stat-streak">0</p></div>
+        <div class="card p-5 rounded-2xl space-y-1.5"><span class="text-2xl">✨</span><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">XP Points</p><p class="text-2xl font-black text-slate-900" id="stat-xp">0</p></div>
+        <div class="card p-5 rounded-2xl col-span-2 md:col-span-1 space-y-1.5"><span class="text-2xl">👑</span><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Rank</p><p class="text-2xl font-black text-slate-900" id="stat-rank">#--</p></div>
       </div>
 
-      <!-- Charts & Badges Split -->
+      <!-- Chart + Badges -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-        <!-- Progress Chart (Line) -->
-        <div class="lg:col-span-8 glass-card p-6 rounded-2xl border-white/5">
-          <h3 class="font-bold text-sm text-slate-350 mb-6 uppercase tracking-wider">Accuracy Trend (Last 7 Days)</h3>
-          <div class="h-[250px] relative">
-            <canvas id="accuracyChart"></canvas>
-          </div>
+        <div class="lg:col-span-8 card p-6 rounded-2xl">
+          <h3 class="font-bold text-sm text-slate-500 mb-5 uppercase tracking-widest">Accuracy Trend (Last 7 Days)</h3>
+          <div class="h-[250px] relative"><canvas id="accuracyChart"></canvas></div>
         </div>
-
-        <!-- Badges Showcase -->
-        <div class="lg:col-span-4 glass-card p-6 rounded-2xl border-white/5 flex flex-col justify-between">
-          <div>
-            <h3 class="font-bold text-sm text-slate-350 mb-4 uppercase tracking-wider">Badges & Titles</h3>
-            <div id="dashboard-badges-grid" class="grid grid-cols-3 gap-3">
-              <!-- user badges -->
-            </div>
-          </div>
-          <div class="pt-6 mt-6 border-t border-white/5 text-center">
-            <p class="text-[11px] text-slate-500 leading-normal">Maintain streaks and solve Hard category quizzes to unlock Platinums!</p>
-          </div>
+        <div class="lg:col-span-4 card p-6 rounded-2xl flex flex-col justify-between">
+          <h3 class="font-bold text-sm text-slate-500 mb-4 uppercase tracking-widest">Badges &amp; Titles</h3>
+          <div id="dashboard-badges-grid" class="grid grid-cols-3 gap-3"></div>
+          <p class="text-[11px] text-slate-400 text-center mt-6 pt-6 border-t border-slate-100">Keep streaks and solve Hard quizzes to unlock Platinum badges!</p>
         </div>
       </div>
 
-      <!-- Recent Attempts List -->
-      <div class="glass-card rounded-2xl border-white/5 overflow-hidden">
-        <div class="p-6 border-b border-white/5">
-          <h3 class="font-bold text-sm text-slate-350 uppercase tracking-wider">Recent Activity Logs</h3>
+      <!-- Recent attempts table -->
+      <div class="card rounded-2xl overflow-hidden">
+        <div class="p-5 border-b border-slate-100">
+          <h3 class="font-bold text-sm text-slate-500 uppercase tracking-widest">Recent Activity</h3>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs sm:text-sm">
-            <thead>
-              <tr class="border-b border-slate-900 bg-slate-900/35 text-slate-400 font-bold">
-                <th class="p-4">Quiz Name</th>
-                <th class="p-4">Accuracy</th>
-                <th class="p-4">Score</th>
-                <th class="p-4">Time taken</th>
-                <th class="p-4">Date</th>
-                <th class="p-4">Action</th>
-              </tr>
-            </thead>
-            <tbody id="attempts-tbody" class="divide-y divide-slate-900">
-              <!-- dynamic rows -->
-            </tbody>
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead><tr class="border-b border-slate-100 bg-slate-50 text-slate-400 font-bold text-xs uppercase tracking-wider">
+              <th class="p-4">Quiz</th><th class="p-4">Accuracy</th><th class="p-4">Score</th><th class="p-4">Time</th><th class="p-4">Date</th><th class="p-4">Action</th>
+            </tr></thead>
+            <tbody id="attempts-tbody" class="divide-y divide-slate-50"></tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         LEADERBOARD VIEW (#leaderboard)
-         ========================================== -->
-    <section id="leaderboard-view" class="view-section max-w-4xl mx-auto px-4 py-12">
+
+    <!-- ======================================
+         LEADERBOARD VIEW  (#leaderboard)
+         ====================================== -->
+    <section id="leaderboard-view" class="view-section max-w-3xl mx-auto px-4 py-12">
       <div class="text-center mb-10 space-y-2">
-        <h2 class="text-4xl font-black bg-gradient-to-r from-indigo-300 via-indigo-500 to-purple-500 bg-clip-text text-transparent">Global Leaderboards</h2>
-        <p class="text-slate-400 text-xs">Climb your way up by attempting challenging questions with fast speeds.</p>
+        <h2 class="text-4xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Global Leaderboard</h2>
+        <p class="text-slate-500 text-sm">Climb by attempting challenging questions with fast speeds.</p>
       </div>
-
-      <!-- Filter Buttons -->
-      <div class="flex justify-center gap-2 mb-6 p-1 rounded-xl bg-slate-900/60 border border-slate-800 w-fit mx-auto">
-        <button class="lead-filter-btn active px-5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-md" data-filter="alltime">All-Time</button>
-        <button class="lead-filter-btn px-5 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white" data-filter="weekly">Weekly</button>
-        <button class="lead-filter-btn px-5 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white" data-filter="monthly">Monthly</button>
+      <div class="flex justify-center gap-2 mb-6 p-1 rounded-xl bg-white border border-slate-200 w-fit mx-auto shadow-sm">
+        <button class="lead-filter-btn active px-5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm" data-filter="alltime">All-Time</button>
+        <button class="lead-filter-btn px-5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-700" data-filter="weekly">Weekly</button>
+        <button class="lead-filter-btn px-5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-700" data-filter="monthly">Monthly</button>
       </div>
-
-      <!-- Full List -->
-      <div class="glass-card rounded-2xl overflow-hidden shadow-2xl border-white/5">
-        <div id="full-leaderboard-list" class="divide-y divide-slate-900">
-          <!-- populated via js -->
-        </div>
+      <div class="card rounded-2xl overflow-hidden shadow-sm">
+        <div id="full-leaderboard-list" class="divide-y divide-slate-100"></div>
       </div>
     </section>
 
-    <!-- ==========================================
-         ACTIVE QUIZ VIEW (#quiz)
-         ========================================== -->
+
+    <!-- ======================================
+         QUIZ VIEW  (#quiz)
+         ====================================== -->
     <section id="quiz-view" class="view-section py-8 px-4 max-w-3xl mx-auto">
-      <!-- Header bar with progress -->
-      <div class="glass-card p-5 rounded-2xl mb-6 flex items-center justify-between border-white/5">
+      <!-- Header -->
+      <div class="card p-5 rounded-2xl mb-6 flex items-center justify-between">
         <div class="space-y-1.5 flex-grow mr-6">
-          <div class="flex items-center justify-between text-xs font-bold text-slate-400">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-500">
             <span id="quiz-header-title">Chapter Practice Test</span>
-            <span id="quiz-question-number">Question 1/10</span>
+            <span id="quiz-question-number">Q 1/10</span>
           </div>
-          <div class="w-full h-2 rounded-full bg-slate-900 overflow-hidden relative border border-white/5">
-            <div id="quiz-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 via-indigo-400 to-purple-500 transition-all duration-300 w-0"></div>
+          <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+            <div id="quiz-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300 w-0 rounded-full"></div>
           </div>
         </div>
-        <div class="shrink-0 flex items-center gap-3">
-          <!-- timer -->
-          <div id="quiz-timer-box" class="hidden items-center gap-1 px-3 py-1.5 rounded-lg border border-white/5 bg-slate-900/60 font-mono text-sm text-slate-350">
+        <div class="flex items-center gap-2 shrink-0">
+          <div id="quiz-timer-box" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-sm font-mono text-slate-700">
             ⏱️ <span id="quiz-timer-text">10:00</span>
           </div>
-          <!-- bookmark -->
-          <button id="quiz-bookmark-btn" class="p-2 rounded-lg border border-white/5 bg-slate-900/60 text-slate-400 hover:text-indigo-400 transition-colors">
+          <button id="quiz-bookmark-btn" class="p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 hover:text-indigo-600 transition-colors">
             <i data-lucide="bookmark" class="w-4 h-4"></i>
           </button>
         </div>
       </div>
 
-      <!-- Question Card -->
-      <div class="glass-card p-8 rounded-2xl shadow-xl space-y-6 border-indigo-500/10 min-h-[300px] flex flex-col justify-between">
+      <!-- Question card -->
+      <div class="card p-8 rounded-2xl shadow-sm space-y-6 min-h-[300px] flex flex-col justify-between">
         <div class="space-y-5">
           <div class="flex items-center justify-between">
-            <span class="px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-[10px] font-black text-indigo-400 uppercase tracking-widest" id="quiz-difficulty-badge">EASY</span>
-            <span class="text-[10px] font-bold text-slate-500 uppercase">+1 Mark</span>
+            <span class="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-[10px] font-black text-indigo-600 uppercase tracking-wider" id="quiz-difficulty-badge">EASY</span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">+1 Mark</span>
           </div>
-          <h3 id="quiz-question-text" class="text-base sm:text-lg font-bold text-slate-200 leading-relaxed">
-            Loading question text...
-          </h3>
+          <h3 id="quiz-question-text" class="text-base sm:text-lg font-bold text-slate-800 leading-relaxed">Loading question...</h3>
         </div>
-
-        <div id="quiz-options-container" class="space-y-3 pt-6 border-t border-slate-900/60">
-          <!-- option buttons -->
-        </div>
+        <div id="quiz-options-container" class="space-y-3 pt-5 border-t border-slate-100"></div>
       </div>
 
-      <!-- Action Navigation Buttons -->
+      <!-- Navigation -->
       <div class="flex justify-between items-center mt-6">
-        <button id="quiz-abort-btn" class="px-5 py-3 rounded-xl border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs uppercase tracking-wider transition-all select-none">Abort Quiz</button>
+        <button id="quiz-abort-btn" class="px-5 py-3 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs uppercase tracking-wider transition-all">Abort Quiz</button>
         <div class="flex items-center gap-3">
-          <button id="quiz-prev-btn" class="hidden px-5 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-300 font-bold text-xs uppercase tracking-wider select-none">Previous</button>
-          <button id="quiz-next-btn" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider transition-all select-none">Next / Submit</button>
+          <button id="quiz-prev-btn" class="hidden px-5 py-3 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold text-xs uppercase tracking-wider">Previous</button>
+          <button id="quiz-next-btn" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-100">Next</button>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         RESULTS VIEW (#results)
-         ========================================== -->
+
+    <!-- ======================================
+         RESULTS VIEW  (#results)
+         ====================================== -->
     <section id="results-view" class="view-section py-12 px-4 max-w-4xl mx-auto">
-      <div class="text-center space-y-4 mb-10">
-        <span class="text-4xl">🎉</span>
-        <h2 class="text-3xl font-black text-white">Quiz Completed!</h2>
-        <p class="text-slate-400 text-xs">Review your performance stats and corrections below.</p>
+      <div class="text-center space-y-3 mb-10">
+        <span class="text-5xl">🎉</span>
+        <h2 class="text-3xl font-black text-slate-900">Quiz Completed!</h2>
+        <p class="text-slate-500 text-sm">Review your performance and detailed corrections below.</p>
       </div>
-
-      <!-- Scoreboard Cards -->
+      <!-- Score cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div class="glass-card p-6 rounded-2xl text-center border-white/5 space-y-1">
-          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Marks Obtained</p>
-          <p class="text-3xl font-black text-indigo-400" id="res-score">0/0</p>
-        </div>
-        <div class="glass-card p-6 rounded-2xl text-center border-white/5 space-y-1">
-          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Accuracy</p>
-          <p class="text-3xl font-black text-emerald-400" id="res-accuracy">0%</p>
-        </div>
-        <div class="glass-card p-6 rounded-2xl text-center border-white/5 space-y-1">
-          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Time Spent</p>
-          <p class="text-3xl font-black text-white" id="res-time">0s</p>
-        </div>
-        <div class="glass-card p-6 rounded-2xl text-center border-white/5 space-y-1">
-          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">XP Earned</p>
-          <p class="text-3xl font-black text-amber-500" id="res-xp">+0 XP</p>
-        </div>
+        <div class="card p-6 rounded-2xl text-center space-y-1"><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Marks Obtained</p><p class="text-3xl font-black text-indigo-600" id="res-score">0/0</p></div>
+        <div class="card p-6 rounded-2xl text-center space-y-1"><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Accuracy</p><p class="text-3xl font-black text-emerald-600" id="res-accuracy">0%</p></div>
+        <div class="card p-6 rounded-2xl text-center space-y-1"><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Time Spent</p><p class="text-3xl font-black text-slate-900" id="res-time">0s</p></div>
+        <div class="card p-6 rounded-2xl text-center space-y-1"><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">XP Earned</p><p class="text-3xl font-black text-amber-500" id="res-xp">+0 XP</p></div>
       </div>
-
-      <!-- Actions -->
-      <div class="flex justify-center gap-4 mb-12">
-        <a href="#dashboard" class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-indigo-600/10 transition-all select-none">Go to Dashboard</a>
-        <a href="#home#categories" class="px-6 py-3.5 border border-white/5 bg-slate-900/60 hover:bg-slate-900 text-slate-350 font-bold rounded-xl text-xs uppercase tracking-wider transition-all select-none">Solve Another Quiz</a>
+      <!-- CTA buttons -->
+      <div class="flex justify-center gap-4 mb-10">
+        <a href="#dashboard" class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-md shadow-indigo-100 transition-all">Dashboard</a>
+        <a href="#home" class="px-6 py-3.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs uppercase tracking-wider transition-all">Solve Another</a>
       </div>
-
-      <!-- Question reviews list -->
-      <div class="glass-card rounded-2xl border-white/5 overflow-hidden">
-        <div class="p-6 border-b border-white/5">
-          <h3 class="font-bold text-sm text-slate-350 uppercase tracking-wider">Detailed Explanations & Corrections</h3>
-        </div>
-        <div id="results-reviews-container" class="divide-y divide-slate-900 p-6 space-y-6">
-          <!-- reviewed questions list with answers -->
-        </div>
+      <!-- Answer review -->
+      <div class="card rounded-2xl overflow-hidden shadow-sm">
+        <div class="p-5 border-b border-slate-100"><h3 class="font-bold text-sm text-slate-500 uppercase tracking-widest">Detailed Corrections</h3></div>
+        <div id="results-reviews-container" class="divide-y divide-slate-100 p-6 space-y-6"></div>
       </div>
     </section>
 
-    <!-- ==========================================
-         ADMIN PANEL VIEW (#admin)
-         ========================================== -->
+
+    <!-- ======================================
+         ADMIN VIEW  (#admin)
+         ====================================== -->
     <section id="admin-view" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <!-- Admin Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 border-b border-white/5 pb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-6 border-b border-slate-200">
         <div>
-          <h2 class="text-3xl font-black text-white">Admin Management Panel</h2>
-          <p class="text-slate-400 text-xs mt-1">Audit logs, modify user levels, and bulk import content.</p>
+          <h2 class="text-3xl font-black text-slate-900">Admin Panel</h2>
+          <p class="text-slate-500 text-sm mt-1">Manage users, bulk import content, and configure ad placements.</p>
         </div>
-        <div class="flex gap-3 mt-4 sm:mt-0">
-          <button id="admin-add-quiz-btn" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs select-none">Add New Quiz</button>
-        </div>
+        <button id="admin-add-quiz-btn" class="mt-4 sm:mt-0 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-100">+ New Quiz</button>
       </div>
 
       <!-- Tabs -->
-      <div class="flex gap-2 border-b border-white/5 mb-8 overflow-x-auto pb-2">
-        <button class="admin-tab-btn active text-sm font-bold text-indigo-400 border-b-2 border-indigo-500 pb-2 px-3" data-tab="users">User Database</button>
-        <button class="admin-tab-btn text-sm font-semibold text-slate-400 hover:text-white pb-2 px-3" data-tab="import">Bulk Import</button>
-        <button class="admin-tab-btn text-sm font-semibold text-slate-400 hover:text-white pb-2 px-3" data-tab="ads">Ads Settings</button>
+      <div class="flex gap-1 border-b border-slate-200 mb-8 overflow-x-auto">
+        <button class="admin-tab-btn pb-3 px-4 text-sm font-bold text-indigo-600 border-b-2 border-indigo-600" data-tab="users">Users</button>
+        <button class="admin-tab-btn pb-3 px-4 text-sm font-semibold text-slate-400 hover:text-slate-700 border-b-2 border-transparent" data-tab="import">Bulk Import</button>
+        <button class="admin-tab-btn pb-3 px-4 text-sm font-semibold text-slate-400 hover:text-slate-700 border-b-2 border-transparent" data-tab="ads">Ad Settings</button>
       </div>
 
-      <!-- Admin Tab 1: Users Manager -->
-      <div id="admin-tab-users" class="admin-content-section space-y-6">
-        <div class="glass-card rounded-2xl border-white/5 overflow-hidden">
-          <div class="p-6 border-b border-white/5 flex items-center justify-between">
-            <h3 class="font-bold text-sm text-slate-350 uppercase tracking-wider">Registered Users</h3>
-            <input type="text" id="admin-search-users" class="px-3 py-1.5 border border-white/5 bg-slate-950/60 text-xs rounded-lg text-slate-300 placeholder-slate-500 focus:outline-none" placeholder="Search by email/username...">
+      <!-- Users panel -->
+      <div id="admin-tab-users" class="admin-panel active">
+        <div class="card rounded-2xl overflow-hidden shadow-sm">
+          <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-500 uppercase tracking-widest">Registered Users</h3>
+            <input type="text" id="admin-search-users" class="px-3 py-1.5 border border-slate-200 bg-slate-50 text-xs rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none" placeholder="Search email / username...">
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs sm:text-sm">
-              <thead>
-                <tr class="border-b border-slate-900 bg-slate-900/35 text-slate-400 font-bold">
-                  <th class="p-4">Name</th>
-                  <th class="p-4">Email</th>
-                  <th class="p-4">XP</th>
-                  <th class="p-4">Role</th>
-                  <th class="p-4">Is Premium</th>
-                  <th class="p-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="admin-users-tbody" class="divide-y divide-slate-900">
-                <!-- user list -->
-              </tbody>
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead><tr class="border-b border-slate-100 bg-slate-50 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                <th class="p-4">Name</th><th class="p-4">Email</th><th class="p-4">XP</th><th class="p-4">Role</th><th class="p-4">Premium</th><th class="p-4">Actions</th>
+              </tr></thead>
+              <tbody id="admin-users-tbody" class="divide-y divide-slate-50"></tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- Admin Tab 2: Bulk Import -->
-      <div id="admin-tab-import" class="admin-content-section hidden space-y-6">
-        <div class="glass-card p-8 rounded-2xl border-white/5 space-y-6 max-w-xl">
-          <h3 class="font-bold text-lg text-white">Bulk Import Quizzes (JSON format)</h3>
-          <p class="text-xs text-slate-400 leading-normal">
-            Upload custom JSON arrays of questions into the database. Select or create the chapter first.
-          </p>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">JSON Content</label>
-              <textarea id="admin-import-textarea" rows="8" class="block w-full p-4 border border-white/5 bg-slate-900/60 text-slate-200 text-xs placeholder-slate-600 rounded-xl focus:outline-none" placeholder='[{"question": "What is molarity?", "option_a": "moles/L", "option_b": "moles/kg", "option_c": "mass/L", "option_d": "mole frac", "correct_option": "A", "difficulty": "easy"}]'></textarea>
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Subject / Category Name</label>
-              <input type="text" id="admin-import-subject" class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 text-sm" placeholder="e.g. Chemistry">
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Chapter Name</label>
-              <input type="text" id="admin-import-chapter" class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 text-sm" placeholder="e.g. Solutions">
-            </div>
+      <!-- Bulk import panel -->
+      <div id="admin-tab-import" class="admin-panel">
+        <div class="card p-8 rounded-2xl shadow-sm max-w-xl space-y-5">
+          <h3 class="font-bold text-lg text-slate-800">Bulk Import Questions (JSON)</h3>
+          <p class="text-sm text-slate-500">Paste a JSON array of question objects and specify the subject and chapter.</p>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">JSON Content</label>
+            <textarea id="admin-import-textarea" rows="8" class="block w-full p-4 border border-slate-200 bg-slate-50 text-slate-700 text-xs placeholder-slate-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder='[{"question":"What is molarity?","option_a":"moles/L","option_b":"moles/kg","option_c":"mass/L","option_d":"mole frac","correct_option":"A"}]'></textarea>
           </div>
-          <button id="admin-import-submit-btn" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-indigo-600/10">Execute Bulk Seeding</button>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Subject Name</label>
+            <input type="text" id="admin-import-subject" class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="e.g. Chemistry">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Chapter Name</label>
+            <input type="text" id="admin-import-chapter" class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="e.g. Solutions">
+          </div>
+          <button id="admin-import-submit-btn" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-md shadow-indigo-100 transition-all">Run Bulk Import</button>
         </div>
       </div>
 
-      <!-- Admin Tab 3: Ads Placements -->
-      <div id="admin-tab-ads" class="admin-content-section hidden space-y-6">
-        <div class="glass-card p-8 rounded-2xl border-white/5 space-y-6 max-w-xl">
-          <h3 class="font-bold text-lg text-white">Add Placement Controller</h3>
-          <p class="text-xs text-slate-400 leading-normal">Configure ad widgets shown dynamically to users during gameplay.</p>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Placement Zone</label>
-              <select id="admin-ad-zone" class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 text-sm">
-                <option value="homepage-top">Homepage top banner</option>
-                <option value="results">Quiz results panel</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Banner Image URL</label>
-              <input type="text" id="admin-ad-image" class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 text-sm" placeholder="e.g. https://via.placeholder.com/728x90">
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Redirect Destination URL</label>
-              <input type="text" id="admin-ad-url" class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 text-sm" placeholder="e.g. https://sponsorlink.com">
-            </div>
+      <!-- Ad settings panel -->
+      <div id="admin-tab-ads" class="admin-panel">
+        <div class="card p-8 rounded-2xl shadow-sm max-w-xl space-y-5">
+          <h3 class="font-bold text-lg text-slate-800">Ad Placement Manager</h3>
+          <p class="text-sm text-slate-500">Configure banner ads shown dynamically on specific site zones.</p>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Zone</label>
+            <select id="admin-ad-zone" class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-sm focus:outline-none">
+              <option value="homepage-top">Homepage Top Banner</option>
+              <option value="results">Quiz Results Panel</option>
+            </select>
           </div>
-          <button id="admin-ad-submit-btn" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-indigo-600/10">Publish Placement ad</button>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Banner Image URL</label>
+            <input type="text" id="admin-ad-image" class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="https://...">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Click Destination URL</label>
+            <input type="text" id="admin-ad-url" class="block w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="https://...">
+          </div>
+          <button id="admin-ad-submit-btn" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-md shadow-indigo-100 transition-all">Publish Ad Placement</button>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- Script tags -->
   <script src="app.js"></script>
 </body>
 </html>

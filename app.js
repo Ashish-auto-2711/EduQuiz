@@ -78,7 +78,7 @@ function runHeroSimulator() {
 
   activeQ.options.forEach((opt, idx) => {
     const btn = document.createElement('button');
-    btn.className = 'w-full text-left p-3 rounded-xl border border-white/5 bg-slate-900/40 text-xs font-semibold text-slate-350 transition-all flex items-center justify-between';
+    btn.className = 'sim-opt w-full text-left p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 transition-all flex items-center justify-between hover:border-indigo-300 hover:bg-indigo-50';
     btn.innerHTML = `<span>${opt}</span>`;
     optEl.appendChild(btn);
   });
@@ -89,8 +89,8 @@ function runHeroSimulator() {
     if (!buttons[activeQ.correct]) return;
     
     // Highlight correct option
-    buttons[activeQ.correct].className = 'w-full text-left p-3 rounded-xl border border-emerald-500 bg-emerald-500/10 text-xs font-semibold text-emerald-400 transition-all flex items-center justify-between';
-    buttons[activeQ.correct].innerHTML += '<span>✓</span>';
+    buttons[activeQ.correct].className = 'sim-opt correct w-full text-left p-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-between';
+    buttons[activeQ.correct].innerHTML += '<span class="text-emerald-600 font-black">✓</span>';
 
     // Show mini explanation toast
     showToast('Correct Answer!', activeQ.explanation, '🧠');
@@ -274,16 +274,16 @@ async function loadCategories(grade) {
     subjects.forEach((sub, idx) => {
       const color = colors[idx % colors.length];
       const card = document.createElement('div');
-      card.className = 'glass-card p-6 rounded-2xl glass-card-hover flex flex-col justify-between group cursor-pointer';
+      card.className = 'card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer transition-all';
       card.innerHTML = `
         <div>
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">
             📚
           </div>
-          <h3 class="text-lg font-bold text-slate-100">${sub.name}</h3>
-          <p class="text-slate-500 text-xs mt-1.5">View practice chapters</p>
+          <h3 class="text-base font-bold text-slate-800">${sub.name}</h3>
+          <p class="text-slate-400 text-xs mt-1.5">View practice chapters</p>
         </div>
-        <div class="mt-8 flex items-center gap-1 text-xs font-bold text-slate-400 group-hover:text-indigo-400">
+        <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500 group-hover:text-indigo-700">
           Browse Chapters <span class="group-hover:translate-x-1 transition-transform">→</span>
         </div>
       `;
@@ -367,57 +367,57 @@ async function launchQuizConfig(chapter) {
     overlay.className = 'fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4';
     
     const content = document.createElement('div');
-    content.className = 'w-full max-w-md glass-card p-8 rounded-2xl shadow-2xl space-y-6';
+    content.className = 'w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl space-y-6 border border-slate-200';
     content.innerHTML = `
-      <div class="flex items-center justify-between border-b border-white/5 pb-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
         <div>
-          <h3 class="text-lg font-bold text-white">Configure Quiz</h3>
+          <h3 class="text-lg font-bold text-slate-900">Configure Quiz</h3>
           <p class="text-slate-500 text-xs mt-0.5">${chapter.name} · ${questions.length} questions available</p>
         </div>
-        <button id="close-cfg-popup" class="p-1 text-slate-400 hover:text-white">✕</button>
+        <button id="close-cfg-popup" class="p-1 text-slate-400 hover:text-slate-700">✕</button>
       </div>
 
       <div class="space-y-4">
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Difficulty filter</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Difficulty filter</label>
           <div class="flex flex-wrap gap-2">
-            <button class="diff-chip active px-3 py-1.5 rounded-lg border border-indigo-500/20 bg-indigo-500/10 text-white font-bold text-xs uppercase" data-diff="mixed">Mixed</button>
-            <button class="diff-chip px-3 py-1.5 rounded-lg border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs uppercase" data-diff="easy">Easy</button>
-            <button class="diff-chip px-3 py-1.5 rounded-lg border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs uppercase" data-diff="moderate">Moderate</button>
-            <button class="diff-chip px-3 py-1.5 rounded-lg border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs uppercase" data-diff="hard">Hard</button>
-            <button class="diff-chip px-3 py-1.5 rounded-lg border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs uppercase" data-diff="neet">NEET</button>
+            <button class="diff-chip active px-3 py-1.5 rounded-lg border border-indigo-500 bg-indigo-50 text-indigo-700 font-bold text-xs uppercase" data-diff="mixed">Mixed</button>
+            <button class="diff-chip px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 font-bold text-xs uppercase" data-diff="easy">Easy</button>
+            <button class="diff-chip px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 font-bold text-xs uppercase" data-diff="moderate">Moderate</button>
+            <button class="diff-chip px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 font-bold text-xs uppercase" data-diff="hard">Hard</button>
+            <button class="diff-chip px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 font-bold text-xs uppercase" data-diff="neet">NEET</button>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Number of Questions</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Number of Questions</label>
           <div class="flex gap-2">
-            <input type="number" id="cfg-count" value="10" min="1" max="100" class="w-20 px-3 py-2 border border-white/5 bg-slate-950/60 rounded-lg text-slate-200 text-xs font-bold text-center">
-            <button class="cnt-pill px-3 py-2 rounded-lg border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs" data-val="5">5</button>
-            <button class="cnt-pill px-3 py-2 rounded-lg border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs" data-val="10">10</button>
-            <button class="cnt-pill px-3 py-2 rounded-lg border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs" data-val="50">50</button>
-            <button class="cnt-pill px-3 py-2 rounded-lg border border-white/5 bg-slate-900/30 text-slate-400 font-bold text-xs" data-val="100">100</button>
+            <input type="number" id="cfg-count" value="10" min="1" max="100" class="w-20 px-3 py-2 border border-slate-200 bg-slate-50 rounded-lg text-slate-700 text-xs font-bold text-center">
+            <button class="cnt-pill px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs" data-val="5">5</button>
+            <button class="cnt-pill px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs" data-val="10">10</button>
+            <button class="cnt-pill px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs" data-val="50">50</button>
+            <button class="cnt-pill px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs" data-val="100">100</button>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Mode</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Mode</label>
           <div class="grid grid-cols-2 gap-3">
-            <label class="border border-indigo-500/20 bg-indigo-500/10 p-3 rounded-xl flex flex-col text-left cursor-pointer transition-all" id="mode-card-practice">
+            <label class="border-2 border-indigo-500 bg-indigo-50 p-3 rounded-xl flex flex-col text-left cursor-pointer transition-all" id="mode-card-practice">
               <input type="radio" name="cfg-mode" value="practice" checked class="hidden">
-              <span class="text-xs font-bold text-white">Practice Mode</span>
-              <span class="text-[9px] text-slate-400 leading-none mt-1">No timer, relax</span>
+              <span class="text-xs font-bold text-indigo-700">Practice Mode</span>
+              <span class="text-[9px] text-indigo-400 leading-none mt-1">No timer, relax</span>
             </label>
-            <label class="border border-white/5 bg-slate-900/40 hover:bg-slate-900/60 p-3 rounded-xl flex flex-col text-left cursor-pointer transition-all" id="mode-card-timed">
+            <label class="border border-slate-200 bg-slate-50 hover:bg-slate-100 p-3 rounded-xl flex flex-col text-left cursor-pointer transition-all" id="mode-card-timed">
               <input type="radio" name="cfg-mode" value="timed" class="hidden">
-              <span class="text-xs font-bold text-slate-350">Timed Mode</span>
-              <span class="text-[9px] text-slate-500 leading-none mt-1">Countdown timer</span>
+              <span class="text-xs font-bold text-slate-700">Timed Mode</span>
+              <span class="text-[9px] text-slate-400 leading-none mt-1">Countdown timer</span>
             </label>
           </div>
         </div>
       </div>
 
-      <button id="start-quiz-btn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/10 uppercase tracking-widest">Start Quiz</button>
+      <button id="start-quiz-btn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-100 uppercase tracking-widest">Start Quiz</button>
     `;
 
     document.body.appendChild(overlay);
@@ -429,11 +429,11 @@ async function launchQuizConfig(chapter) {
     let selectedDiff = 'mixed';
     chips.forEach(c => {
       c.onclick = () => {
-        chips.forEach(x => x.classList.remove('active', 'border-indigo-500/20', 'bg-indigo-500/10', 'text-white'));
-        chips.forEach(x => x.classList.add('border-white/5', 'bg-slate-900/30', 'text-slate-400'));
+        chips.forEach(x => x.classList.remove('active', 'border-indigo-500', 'bg-indigo-50', 'text-indigo-700'));
+        chips.forEach(x => x.classList.add('border-slate-200', 'bg-slate-50', 'text-slate-500'));
         
-        c.classList.add('active', 'border-indigo-500/20', 'bg-indigo-500/10', 'text-white');
-        c.classList.remove('border-white/5', 'bg-slate-900/30', 'text-slate-400');
+        c.classList.add('active', 'border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+        c.classList.remove('border-slate-200', 'bg-slate-50', 'text-slate-500');
         selectedDiff = c.getAttribute('data-diff');
       };
     });
@@ -455,11 +455,11 @@ async function launchQuizConfig(chapter) {
     modeInputs.forEach(i => {
       i.onchange = () => {
         if (i.value === 'practice') {
-          modePractice.className = 'border border-indigo-500/20 bg-indigo-500/10 p-3 rounded-xl flex flex-col text-left cursor-pointer';
-          modeTimed.className = 'border border-white/5 bg-slate-900/40 hover:bg-slate-900/60 p-3 rounded-xl flex flex-col text-left cursor-pointer';
+          modePractice.className = 'border-2 border-indigo-500 bg-indigo-50 p-3 rounded-xl flex flex-col text-left cursor-pointer';
+          modeTimed.className = 'border border-slate-200 bg-slate-50 hover:bg-slate-100 p-3 rounded-xl flex flex-col text-left cursor-pointer';
         } else {
-          modeTimed.className = 'border border-indigo-500/20 bg-indigo-500/10 p-3 rounded-xl flex flex-col text-left cursor-pointer';
-          modePractice.className = 'border border-white/5 bg-slate-900/40 hover:bg-slate-900/60 p-3 rounded-xl flex flex-col text-left cursor-pointer';
+          modeTimed.className = 'border-2 border-indigo-500 bg-indigo-50 p-3 rounded-xl flex flex-col text-left cursor-pointer';
+          modePractice.className = 'border border-slate-200 bg-slate-50 hover:bg-slate-100 p-3 rounded-xl flex flex-col text-left cursor-pointer';
         }
       };
     });
@@ -559,16 +559,16 @@ function renderQuestion(idx) {
     const btn = document.createElement('button');
     btn.className = `w-full text-left p-4 rounded-xl border text-sm font-semibold transition-all flex items-center justify-between ${
       isSelected
-        ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400'
-        : 'border-white/5 bg-slate-900/40 hover:bg-slate-900/80 text-slate-300'
+        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+        : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-indigo-200 text-slate-700'
     }`;
     btn.innerHTML = `
       <span>Option ${opt.label}: ${opt.text}</span>
-      ${isSelected ? '<span>✓</span>' : ''}
+      ${isSelected ? '<span class="text-indigo-600 font-black">✓</span>' : ''}
     `;
     btn.onclick = () => {
       quizAnswers[idx] = opt.label;
-      renderQuestion(idx); // re-render options highlights
+      renderQuestion(idx);
     };
     container.appendChild(btn);
   });
@@ -592,9 +592,9 @@ function renderQuestion(idx) {
   // Bookmark styling
   const bookBtn = document.getElementById('quiz-bookmark-btn');
   if (quizBookmarks.has(q.id)) {
-    bookBtn.className = 'p-2 rounded-lg border border-indigo-500/20 bg-indigo-500/10 text-indigo-400';
+    bookBtn.className = 'p-2 rounded-lg border border-indigo-400 bg-indigo-50 text-indigo-600';
   } else {
-    bookBtn.className = 'p-2 rounded-lg border border-white/5 bg-slate-900/60 text-slate-400 hover:text-indigo-400';
+    bookBtn.className = 'p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 hover:text-indigo-600 transition-colors';
   }
 }
 
@@ -672,13 +672,13 @@ async function submitQuizAnswers() {
     div.innerHTML = `
       <div class="flex items-center gap-2 mb-2">
         <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs ${
-          rev.isCorrect ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+          rev.isCorrect ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-200'
         }">${idx + 1}</span>
-        <h4 class="font-bold text-sm text-slate-200">${rev.question}</h4>
+        <h4 class="font-bold text-sm text-slate-800">${rev.question}</h4>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs pl-7">
-        <div class="p-2 rounded border border-white/5 bg-slate-950/40 text-slate-400">Selected Answer: <span class="font-bold">${rev.selected}</span></div>
-        <div class="p-2 rounded border border-emerald-500/10 bg-emerald-500/5 text-emerald-400">Correct Answer: <span class="font-bold">${rev.correct}</span></div>
+        <div class="p-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-600">Your Answer: <span class="font-bold ${rev.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${rev.selected}</span></div>
+        <div class="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700">Correct Answer: <span class="font-bold">${rev.correct}</span></div>
       </div>
     `;
     reviewsContainer.appendChild(div);
@@ -764,14 +764,14 @@ async function loadUserDashboard() {
 
       attempts.forEach(att => {
         const row = document.createElement('tr');
-        row.className = 'border-b border-slate-900/50 hover:bg-slate-900/10 transition-colors';
+        row.className = 'hover:bg-slate-50 transition-colors';
         row.innerHTML = `
-          <td class="p-4 font-bold text-slate-200">Practice Quiz</td>
-          <td class="p-4 text-indigo-400 font-semibold">${att.accuracy}%</td>
-          <td class="p-4 text-slate-350">${att.score} Correct</td>
+          <td class="p-4 font-bold text-slate-800">Practice Quiz</td>
+          <td class="p-4 text-indigo-600 font-semibold">${att.accuracy}%</td>
+          <td class="p-4 text-slate-600">${att.score} Correct</td>
           <td class="p-4 text-slate-500">${att.time_taken}s</td>
           <td class="p-4 text-slate-500">${new Date(att.created_at).toLocaleDateString()}</td>
-          <td class="p-4"><button class="px-3 py-1 rounded bg-slate-900 border border-white/5 text-xs text-slate-300 hover:text-white transition-all">Retry</button></td>
+          <td class="p-4"><button class="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-xs text-indigo-600 font-bold hover:bg-indigo-100 transition-all">Retry</button></td>
         `;
         tbody.appendChild(row);
       });
@@ -803,8 +803,8 @@ async function loadUserDashboard() {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } },
-          x: { grid: { display: false } }
+          y: { min: 0, max: 100, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#94a3b8' } },
+          x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
         }
       }
     });
@@ -832,18 +832,18 @@ async function loadFullLeaderboard() {
       const isTop3 = idx < 3;
       const badge = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
       const div = document.createElement('div');
-      div.className = 'flex items-center justify-between p-5 hover:bg-slate-900/20 transition-colors';
+      div.className = 'flex items-center justify-between p-5 hover:bg-indigo-50 transition-colors';
       div.innerHTML = `
         <div class="flex items-center gap-4">
-          <span class="w-6 text-center text-sm font-extrabold text-slate-500">${badge ? badge : idx + 1}</span>
-          <span class="w-9 h-9 rounded-full bg-slate-900 border border-white/5 flex items-center justify-center text-lg">${u.avatar || '🧑‍🎓'}</span>
+          <span class="w-6 text-center text-sm font-extrabold ${idx < 3 ? 'text-lg' : 'text-slate-400'}">${badge ? badge : idx + 1}</span>
+          <span class="w-9 h-9 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-sm font-bold text-indigo-700">${(u.name || u.username || 'U')[0].toUpperCase()}</span>
           <div>
-            <p class="text-sm font-bold text-slate-200">${u.name || u.username}</p>
-            <p class="text-[9px] text-slate-500">Level: ${u.level || 'Bronze'}</p>
+            <p class="text-sm font-bold text-slate-800">${u.name || u.username}</p>
+            <p class="text-[10px] text-slate-400">Level: ${u.level || 'Bronze'}</p>
           </div>
         </div>
         <div class="text-right">
-          <span class="text-sm font-black text-indigo-400">${u.xp || 0} XP</span>
+          <span class="text-sm font-black text-indigo-600">${u.xp || 0} XP</span>
         </div>
       `;
       container.appendChild(div);
@@ -861,18 +861,18 @@ function loadLeaderboardPreview() {
   
   LEADERBOARD_PREVIEW.forEach(u => {
     const div = document.createElement('div');
-    div.className = 'flex items-center justify-between p-5 hover:bg-slate-900/40 transition-colors';
+    div.className = 'flex items-center justify-between p-5 hover:bg-indigo-50 transition-colors';
     div.innerHTML = `
       <div class="flex items-center gap-4">
-        <span class="w-6 text-center text-sm font-extrabold text-slate-500">${u.badge ? u.badge : u.rank}</span>
-        <span class="w-10 h-10 rounded-full bg-slate-900 border border-white/5 flex items-center justify-center text-lg">${u.avatar}</span>
+        <span class="w-6 text-center ${u.badge ? 'text-lg' : 'text-sm font-extrabold text-slate-400'}">${u.badge ? u.badge : u.rank}</span>
+        <span class="w-10 h-10 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-sm font-bold text-indigo-700">${u.name[0]}</span>
         <div>
-          <p class="text-sm font-bold text-slate-200">${u.name}</p>
-          <p class="text-[10px] text-slate-500">Avg Accuracy: ${u.accuracy}</p>
+          <p class="text-sm font-bold text-slate-800">${u.name}</p>
+          <p class="text-[10px] text-slate-400">Avg Accuracy: ${u.accuracy}</p>
         </div>
       </div>
       <div class="text-right">
-        <span class="text-sm font-black text-indigo-400">${u.points} XP</span>
+        <span class="text-sm font-black text-indigo-600">${u.points} XP</span>
       </div>
     `;
     container.appendChild(div);
@@ -885,21 +885,26 @@ function loadTrendingQuizzes() {
 
   TRENDING_QUIZZES.forEach(q => {
     const card = document.createElement('div');
-    card.className = 'glass-card p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all';
+    card.className = 'card p-6 rounded-2xl flex flex-col justify-between transition-all';
     card.innerHTML = `
       <div>
         <div class="flex items-center justify-between mb-4">
-          <span class="px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-[10px] font-black text-indigo-400 uppercase tracking-wider">${q.category}</span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-500/10 text-red-400 border border-red-500/20">${q.difficulty}</span>
+          <span class="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-[10px] font-black text-indigo-600 uppercase tracking-wider">${q.category}</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+            q.difficulty === 'Hard' ? 'bg-red-50 text-red-600 border border-red-200' :
+            q.difficulty === 'NEET' ? 'bg-purple-50 text-purple-600 border border-purple-200' :
+            q.difficulty === 'Moderate' ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+            'bg-emerald-50 text-emerald-600 border border-emerald-200'
+          }">${q.difficulty}</span>
         </div>
-        <h3 class="font-bold text-slate-100 leading-normal line-clamp-2 min-h-[44px]">${q.title}</h3>
-        <div class="flex items-center justify-between text-slate-500 text-xs mt-6">
+        <h3 class="font-bold text-slate-800 leading-normal line-clamp-2 min-h-[44px]">${q.title}</h3>
+        <div class="flex items-center justify-between text-slate-400 text-xs mt-6">
           <span>${q.attempts} plays</span>
           <span>Accuracy: ${q.accuracy}</span>
         </div>
       </div>
-      <div class="mt-6 pt-4 border-t border-slate-900">
-        <button class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-indigo-600 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition-all">Play Now</button>
+      <div class="mt-6 pt-4 border-t border-slate-100">
+        <button class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white transition-all shadow-sm shadow-indigo-100">Play Now</button>
       </div>
     `;
     card.querySelector('button').onclick = () => {
@@ -916,13 +921,13 @@ function loadFaqAccordion() {
 
   FAQS.forEach((faq, idx) => {
     const div = document.createElement('div');
-    div.className = 'glass-card rounded-xl overflow-hidden border-slate-850/60 transition-all';
+    div.className = 'bg-white rounded-xl overflow-hidden border border-slate-200 transition-all';
     div.innerHTML = `
-      <button class="w-full flex items-center justify-between p-5 text-left font-semibold text-slate-200 hover:text-white transition-all">
+      <button class="w-full flex items-center justify-between p-5 text-left font-semibold text-slate-700 hover:text-indigo-600 transition-all">
         <span>${faq.q}</span>
-        <span class="text-slate-500 font-bold">✕</span>
+        <span class="text-slate-400 font-bold">+</span>
       </button>
-      <div class="faq-content hidden px-5 pb-5 pt-1 text-sm text-slate-400 leading-relaxed border-t border-slate-900/60 bg-slate-900/20">
+      <div class="faq-content hidden px-5 pb-5 pt-1 text-sm text-slate-500 leading-relaxed border-t border-slate-100 bg-slate-50">
         ${faq.a}
       </div>
     `;
