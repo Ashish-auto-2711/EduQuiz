@@ -1771,7 +1771,266 @@ a { text-decoration: none; color: inherit; }
   }
 }
 
-/* ── 32. Accessibility ────────────────────────────────────────── */
+/* ── 32. Mobile-First Responsive ──────────────────────────────── */
+
+/* Small phones (360px — 480px) */
+@media (max-width: 480px) {
+  /* Global spacing squeeze */
+  :root {
+    --sp-4: 12px;
+    --sp-5: 16px;
+    --sp-6: 18px;
+    --sp-8: 24px;
+    --sp-10: 28px;
+    --sp-12: 32px;
+  }
+
+  /* Navbar compact */
+  .navbar { height: 48px; padding: 0 var(--sp-3); }
+  .logo-text { font-size: .95rem; }
+  .nav-actions { gap: 6px; }
+
+  /* Hero compact */
+  .hero { padding: var(--sp-5) var(--sp-3); }
+  .hero-badge { font-size: .65rem; padding: 4px 10px; }
+  .hero h1 { font-size: 1.35rem; }
+  .hero-sub { font-size: .78rem; }
+  .hero-ctas { gap: 8px; flex-wrap: wrap; }
+  .hero-ctas .btn-primary,
+  .hero-ctas .btn-outline { font-size: .78rem; padding: 8px 16px; min-height: 36px; }
+  .hero-stat-strip { gap: 12px; }
+  .hsi-num { font-size: 1.1rem; }
+  .hsi-label { font-size: .6rem; }
+
+  /* Section titles compact */
+  .section-title { font-size: 1rem; }
+  .section-wrap { padding: var(--sp-3); }
+
+  /* Class grid — 3 columns compact */
+  .class-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .class-card { padding: 10px 6px; }
+  .cc-number { font-size: 1.2rem; }
+  .cc-label { font-size: .7rem; }
+  .cc-sub { font-size: .58rem; }
+  .cc-ring { width: 24px; height: 24px; }
+  .cc-pattern { font-size: 1.3rem; top: -6px; right: -4px; }
+
+  /* Subject grid — 2 columns */
+  .subject-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .subject-card { padding: 12px 10px; }
+  .sc-icon { font-size: 1.5rem; }
+  .sc-name { font-size: .78rem; }
+  .sc-meta { font-size: .62rem; }
+
+  /* Chapter items compact */
+  .chapter-item { padding: 10px 12px; gap: 10px; }
+  .chi-num { width: 28px; height: 28px; font-size: .7rem; }
+  .chi-title { font-size: .8rem; }
+  .chi-meta { font-size: .6rem; }
+  .chi-meta span { padding: 1px 5px; }
+  .chi-actions .btn-primary { font-size: .68rem; padding: 5px 10px; min-height: 28px; }
+  .best-score-chip { font-size: .58rem; }
+
+  /* Class chip row */
+  .class-chip { font-size: .68rem; padding: 4px 10px; }
+
+  /* Config sheet compact */
+  .config-sheet { max-height: 85vh; }
+  .config-sheet-header { padding: 14px 16px; }
+  .config-sheet-header h2 { font-size: 1rem; }
+  .cfg-section { padding: 12px 16px; }
+  .cfg-label { font-size: .72rem; }
+  .seg-group { gap: 4px; }
+  .seg-btn { font-size: .7rem; padding: 5px 10px; }
+  .stepper { gap: 6px; }
+  .stepper input { width: 44px; font-size: .8rem; }
+  .stepper button { width: 28px; height: 28px; font-size: .85rem; }
+  .stepper-pills { gap: 4px; }
+  .stepper-pill { font-size: .62rem; padding: 3px 7px; }
+  .time-mode-card { padding: 8px 10px; }
+  .time-mode-card h4 { font-size: .75rem; }
+  .time-mode-card p { font-size: .6rem; }
+  .cfg-toggle-row { font-size: .75rem; padding: 6px 0; }
+  .btn-launch { font-size: .85rem; padding: 10px 16px; }
+
+  /* ═══ QUIZ SCREEN — MOBILE FIX ═══ */
+
+  /* Sticky bar: smaller, tight */
+  .quiz-sticky-bar {
+    padding: 6px 10px;
+    gap: 8px;
+    top: 48px; /* match compact navbar height */
+  }
+  .q-back-btn { width: 26px; height: 26px; }
+  .q-back-btn svg { width: 14px; height: 14px; }
+  .q-counter { font-size: .75rem; }
+  .q-prog-bar-wrap { height: 4px; }
+  .q-timer { font-size: .72rem; gap: 4px; }
+  .ring-timer { width: 22px; height: 22px; }
+
+  /* Quiz card: compact padding, smaller text */
+  .quiz-card-wrap {
+    padding: 10px 10px 6px;
+  }
+  .quiz-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  /* Badges: smaller and with margin-bottom to avoid overlap */
+  .qc-meta {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .diff-badge {
+    padding: 2px 8px;
+    font-size: .62rem;
+  }
+  .q-type-badge {
+    padding: 2px 7px;
+    font-size: .58rem;
+  }
+
+  /* Question text: smaller */
+  .q-text {
+    font-size: .88rem;
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+
+  /* Options: compact */
+  .options-stack { gap: 8px; }
+  .option-btn {
+    padding: 10px 12px;
+    font-size: .78rem;
+    min-height: 40px;
+    gap: 10px;
+    border-radius: 12px;
+  }
+  .option-letter {
+    width: 24px; height: 24px;
+    font-size: .68rem;
+  }
+
+  /* Quiz nav: compact buttons */
+  .quiz-nav {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  .qnav-btn {
+    padding: 7px 12px;
+    font-size: .72rem;
+    min-height: 34px;
+    border-radius: 10px;
+    gap: 4px;
+  }
+  .qnav-btn svg { width: 13px; height: 13px; }
+
+  /* Dot tracker */
+  .dot-tracker-wrap { padding: 6px 10px; }
+  .q-dot { width: 10px; height: 10px; }
+
+  /* Submit sheet */
+  .submit-sheet { padding: 16px; }
+  .submit-sheet h3 { font-size: 1rem; }
+  .submit-stats { gap: 8px; }
+  .submit-stat { padding: 8px; }
+  .submit-stat .label { font-size: .6rem; }
+  .submit-stat span { font-size: 1.1rem; }
+
+  /* ═══ RESULTS SCREEN — MOBILE ═══ */
+  .results-hero {
+    padding: 20px 14px;
+  }
+  .score-ring-wrap svg { width: 110px; height: 110px; }
+  .score-inner { font-size: .8rem; }
+  .score-inner .big-score { font-size: 1.8rem; }
+  .res-grade { font-size: 1rem; }
+  .res-pct { font-size: .72rem; }
+  .res-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .res-stat-card { padding: 10px; }
+  .rsc-value { font-size: 1.1rem; }
+  .rsc-label { font-size: .6rem; }
+
+  /* Difficulty breakdown bars */
+  .diff-bar-row { font-size: .72rem; gap: 6px; }
+  .diff-bar-label { min-width: 42px; font-size: .65rem; }
+  .diff-bar-pct { font-size: .65rem; min-width: 30px; }
+
+  /* Review items */
+  .review-item { border-radius: 10px; }
+  .review-header { padding: 10px 12px; font-size: .78rem; }
+  .review-q-text { font-size: .75rem; }
+  .review-body { padding: 10px 12px; font-size: .72rem; }
+  .review-ans { font-size: .7rem; padding: 4px 8px; }
+
+  /* Results action buttons */
+  .results-actions { gap: 6px; padding: 10px; flex-wrap: wrap; }
+  .results-actions .btn-primary,
+  .results-actions .btn-outline,
+  .results-actions button { font-size: .72rem; padding: 7px 12px; min-height: 32px; }
+
+  /* History items */
+  .history-item { padding: 10px 12px; }
+  .score-pct { font-size: .85rem; }
+  .hi-name { font-size: .78rem; }
+  .hi-meta { font-size: .6rem; }
+
+  /* Daily challenge card */
+  .daily-card { padding: 14px; }
+  .daily-card h3 { font-size: .85rem; }
+
+  /* Why-us cards */
+  .why-card { padding: 14px; }
+  .why-card h4 { font-size: .8rem; }
+  .why-card p { font-size: .68rem; }
+
+  /* Recent section */
+  .recent-item { padding: 8px 10px; }
+  .ri-score { font-size: .85rem; }
+  .ri-name { font-size: .75rem; }
+  .ri-meta { font-size: .58rem; }
+
+  /* Continue card */
+  .continue-card { padding: 12px; }
+
+  /* Footer */
+  .footer { padding: 16px; }
+  .footer-title { font-size: .85rem; }
+  .footer-sub { font-size: .6rem; }
+
+  /* Bottom nav compact */
+  .bottom-nav { height: 52px; padding: 0 4px; }
+  .bnav-item { font-size: .55rem; gap: 2px; }
+  .bnav-item svg { width: 18px; height: 18px; }
+
+  /* Toast */
+  .toast { font-size: .75rem; padding: 8px 14px; }
+
+  /* Breadcrumb */
+  .breadcrumb-wrap { padding: 6px 10px; font-size: .7rem; }
+
+  /* Global button sizes */
+  .btn-primary { font-size: .78rem; padding: 8px 16px; }
+  .btn-outline { font-size: .78rem; padding: 8px 16px; }
+  .btn-sm { font-size: .68rem; padding: 4px 8px; min-height: 26px; }
+
+  /* Import page */
+  .import-section { padding: 14px; }
+  .drop-zone { padding: 24px 14px; }
+  .drop-zone p { font-size: .75rem; }
+}
+
+/* Mid-range phones (481px — 640px) */
+@media (min-width: 481px) and (max-width: 640px) {
+  .class-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .quiz-card { padding: 18px; }
+  .q-text { font-size: .92rem; }
+  .option-btn { padding: 11px 14px; font-size: .82rem; min-height: 44px; }
+  .hero h1 { font-size: 1.5rem; }
+}
+
+/* ── 33. Accessibility ────────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
