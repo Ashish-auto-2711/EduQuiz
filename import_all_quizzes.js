@@ -3,7 +3,7 @@ const path = require('path');
 const xlsx = require('xlsx');
 
 const INSFORGE_URL = 'https://c43du8wy.us-east.insforge.app';
-const INSFORGE_KEY = 'anon_61ab7eb0294a9648862366b8f8304a46b8fc7bdb08db307e9ef9c1b014768351';
+const INSFORGE_KEY = 'ik_bc9b7710a147746be48216c8064944be';
 
 // HTTP helper
 async function request(endpoint, options = {}) {
@@ -72,19 +72,30 @@ async function importFile(filepath) {
   console.log(`\n--------------------------------------------------`);
   console.log(`Processing: ${filename}`);
 
-  const meta = parseFilename(filename);
-  console.log(`Parsed Metadata: Class ${meta.classNum} | Subject: ${meta.subject} | Chapter: ${meta.chapter}`);
-
-  if (!meta.subject || !meta.chapter) {
-    console.warn(`Could not parse metadata for ${filename}. Skipping.`);
-    return;
-  }
-
   // Load workbook
   const wb = xlsx.readFile(filepath);
   const sheet = wb.Sheets[wb.SheetNames[0]];
   const rows = xlsx.utils.sheet_to_json(sheet);
   console.log(`Loaded ${rows.length} rows from file.`);
+
+  if (rows.length === 0) {
+    console.warn(`No rows found in ${filename}. Skipping.`);
+    return;
+  }
+
+  // Extract metadata from CSV columns
+  const firstRow = rows[0];
+  const classNum = parseInt(firstRow['Class'] || firstRow['class'] || 12);
+  const subject = (firstRow['Subject'] || firstRow['subject'] || '').toString().trim();
+  const chapter = (firstRow['Chapter'] || firstRow['chapter'] || '').toString().trim();
+
+  const meta = { classNum, subject, chapter };
+  console.log(`Parsed CSV Metadata: Class ${meta.classNum} | Subject: ${meta.subject} | Chapter: ${meta.chapter}`);
+
+  if (!meta.subject || !meta.chapter) {
+    console.warn(`Could not parse metadata from CSV content for ${filename}. Skipping.`);
+    return;
+  }
 
   // 1. Get or create Subject
   const subjectName = meta.classNum === 12 ? meta.subject : `${meta.subject} (Class ${meta.classNum})`;

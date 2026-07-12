@@ -16,6 +16,14 @@ let accessToken = null;
 
 // Global State
 let currentUser = null;
+try {
+  const cached = localStorage.getItem('userSession');
+  if (cached) {
+    currentUser = JSON.parse(cached);
+  }
+} catch (e) {
+  console.warn('Failed to parse cached userSession:', e);
+}
 let currentQuiz = null;
 let currentQuestions = [];
 let quizAnswers = []; // user selected options
@@ -386,34 +394,75 @@ async function loadCategoriesView() {
 }
 
 // Global functions exposed to window since they are referenced in HTML onclick attributes
-window.selectClassForBrowse = async function(grade) {
-  // Highlight chosen class card
-  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 'JEE', 'NEET', 'Govt', 'GK'].forEach(g => {
-    const card = document.getElementById(`class-browse-${g}`);
-    if (!card) return;
-    if (g === grade) {
-      card.className = 'card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer border-2 border-indigo-600 bg-indigo-50/30 hover:shadow-md transition-all';
-    } else {
-      card.className = 'card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all border-slate-200';
-    }
-  });
+// Global variables to track the state of the exploration wizard
+let currentExploreGrade = null;
+let currentExploreSubject = null;
+let currentExploreChapter = null;
 
-  const subjectsTitle = document.getElementById('browse-subjects-title');
-  const subjectsGrid = document.getElementById('browse-subjects-grid');
-  const subjectsSection = document.getElementById('browse-subjects-section');
-  const chaptersSection = document.getElementById('browse-chapters-section');
+// Open Exploration Modal
+window.selectClassForBrowse = function(grade) {
+  currentExploreGrade = grade;
+  currentExploreSubject = null;
+  currentExploreChapter = null;
 
-  // Hide chapters list first when switching class
-  chaptersSection.classList.add('hidden');
-
-  subjectsTitle.innerText = `Subjects in ${typeof grade === 'number' ? 'Class ' + grade : grade}`;
-  subjectsGrid.innerHTML = '<div class="col-span-full text-center text-xs text-slate-500 py-8">Loading subjects...</div>';
-  subjectsSection.classList.remove('hidden');
+  const modal = document.getElementById('exploration-modal');
+  const card = document.getElementById('explore-modal-card');
   
-  // Smooth scroll to subjects
+  modal.classList.remove('hidden');
+  // Trigger animation reflow
   setTimeout(() => {
-    subjectsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 100);
+    card.classList.remove('scale-95', 'opacity-0');
+    card.classList.add('scale-100', 'opacity-100');
+  }, 10);
+
+  // Close handlers
+  document.getElementById('close-exploration-modal').onclick = closeExplorationModal;
+  
+  // Esc key closure
+  const handleEsc = (e) => {
+    if (e.key === 'Escape') {
+      closeExplorationModal();
+      document.removeEventListener('keydown', handleEsc);
+    }
+  };
+  document.addEventListener('keydown', handleEsc);
+
+  renderExploreStep1(grade);
+};
+
+// Close Exploration Modal
+function closeExplorationModal() {
+  const modal = document.getElementById('exploration-modal');
+  const card = document.getElementById('explore-modal-card');
+  
+  card.classList.remove('scale-100', 'opacity-100');
+  card.classList.add('scale-95', 'opacity-0');
+  
+  setTimeout(() => {
+    modal.classList.add('hidden');
+  }, 300);
+}
+
+// Step 1: Render Subjects
+async function renderExploreStep1(grade) {
+  const stepIndicator = document.getElementById('explore-step-indicator');
+  const pathIndicator = document.getElementById('explore-path-indicator');
+  const title = document.getElementById('explore-modal-title');
+  const subtitle = document.getElementById('explore-modal-subtitle');
+  const backBtn = document.getElementById('explore-back-btn');
+  const content = document.getElementById('explore-modal-content');
+
+  stepIndicator.innerText = 'Step 1 of 3';
+  pathIndicator.innerText = 'Select Subject';
+  title.innerText = `Subjects in ${typeof grade === 'number' ? 'Class ' + grade : grade}`;
+  subtitle.innerText = 'Select a subject to view available practice chapters.';
+  backBtn.classList.add('hidden');
+
+  content.innerHTML = `
+    <div class="flex items-center justify-center py-16">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent"></div>
+    </div>
+  `;
 
   try {
     let subjects = [];
@@ -473,7 +522,6 @@ window.selectClassForBrowse = async function(grade) {
       } else {
         subjects = allSubjects.filter(s => s.name.includes(`Class ${grade}`));
         if (!subjects.length) {
-          // Fallback mock subjects for these classes
           subjects = [
             { id: `mock-sub-${grade}-math`, name: `Mathematics (Class ${grade})`, isMock: true },
             { id: `mock-sub-${grade}-phys`, name: `Physics (Class ${grade})`, isMock: true },
@@ -484,10 +532,12 @@ window.selectClassForBrowse = async function(grade) {
       }
     }
 
-    subjectsGrid.innerHTML = '';
-    
     if (!subjects.length) {
-      subjectsGrid.innerHTML = '<div class="col-span-full text-center text-xs text-slate-500 py-8 font-semibold">No subjects available for Class ' + grade + ' yet. Seeder is running in background...</div>';
+      content.innerHTML = `
+        <div class="text-center py-16">
+          <p class="text-slate-400 text-sm font-semibold">No subjects available for this category yet.</p>
+        </div>
+      `;
       return;
     }
 
@@ -498,60 +548,79 @@ window.selectClassForBrowse = async function(grade) {
       'from-amber-600 to-orange-600'
     ];
 
+    const grid = document.createElement('div');
+    grid.className = 'grid grid-cols-2 gap-4 py-2';
+    
     subjects.forEach((sub, idx) => {
       const color = colors[idx % colors.length];
       const nameWithoutClass = sub.name.split(' (Class')[0].split(' (JEE')[0].split(' (NEET')[0].split(' (Govt')[0].split(' (GK')[0];
       
       const card = document.createElement('div');
-      card.className = 'card p-6 rounded-2xl flex flex-col justify-between group cursor-pointer transition-all border border-slate-200 hover:border-indigo-300 hover:shadow-md';
+      card.className = 'card p-5 rounded-2xl flex flex-col justify-between group cursor-pointer border border-slate-100 hover:border-indigo-300 hover:shadow-md transition-all';
       card.innerHTML = `
         <div>
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white mb-6 group-hover:scale-105 transition-all shadow-md">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white mb-4 group-hover:scale-105 transition-all shadow-sm text-lg">
             📚
           </div>
-          <h3 class="text-base font-bold text-slate-800">${nameWithoutClass}</h3>
-          <p class="text-slate-400 text-xs mt-1.5">View practice chapters</p>
+          <h3 class="text-sm font-bold text-slate-800">${nameWithoutClass}</h3>
+          <p class="text-slate-400 text-[10px] mt-1">View practice chapters</p>
         </div>
-        <div class="mt-8 flex items-center gap-1 text-xs font-bold text-indigo-500 group-hover:text-indigo-700">
-          Browse Chapters <span class="group-hover:translate-x-1 transition-transform">→</span>
+        <div class="mt-6 flex items-center gap-1 text-[11px] font-bold text-indigo-500 group-hover:text-indigo-700">
+          Chapters <span class="group-hover:translate-x-1 transition-transform">→</span>
         </div>
       `;
-      card.onclick = () => selectSubjectForBrowse(sub, grade);
-      subjectsGrid.appendChild(card);
+      card.onclick = () => {
+        currentExploreSubject = sub;
+        renderExploreStep2(sub, grade);
+      };
+      grid.appendChild(card);
     });
+
+    content.innerHTML = '';
+    content.appendChild(grid);
 
   } catch (err) {
     console.error(err);
-    subjectsGrid.innerHTML = '<div class="col-span-full text-center text-xs text-red-500 py-8">Failed to load subjects.</div>';
+    content.innerHTML = `<div class="text-center py-16 text-red-500 text-sm">Failed to load subjects. Error: ${err.message}</div>`;
   }
-};
+}
 
-window.selectSubjectForBrowse = async function(subject, grade) {
-  const chaptersTitle = document.getElementById('browse-chapters-title');
-  const chaptersGrid = document.getElementById('browse-chapters-grid');
-  const chaptersSection = document.getElementById('browse-chapters-section');
+// Step 2: Render Chapters
+async function renderExploreStep2(subject, grade) {
+  const stepIndicator = document.getElementById('explore-step-indicator');
+  const pathIndicator = document.getElementById('explore-path-indicator');
+  const title = document.getElementById('explore-modal-title');
+  const subtitle = document.getElementById('explore-modal-subtitle');
+  const backBtn = document.getElementById('explore-back-btn');
+  const content = document.getElementById('explore-modal-content');
 
   const cleanSubjectName = subject.name.split(' (Class')[0].split(' (JEE')[0].split(' (NEET')[0].split(' (Govt')[0].split(' (GK')[0];
-  chaptersTitle.innerText = `${cleanSubjectName} (${grade}) Chapters`;
-  chaptersGrid.innerHTML = '<div class="col-span-full text-center text-xs text-slate-500 py-8">Loading chapters...</div>';
-  chaptersSection.classList.remove('hidden');
 
-  // Smooth scroll to chapters
-  setTimeout(() => {
-    chaptersSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 100);
+  stepIndicator.innerText = 'Step 2 of 3';
+  pathIndicator.innerText = cleanSubjectName;
+  title.innerText = `${cleanSubjectName} Chapters`;
+  subtitle.innerText = 'Select a chapter to practice or configure custom test settings.';
+  
+  backBtn.classList.remove('hidden');
+  backBtn.onclick = () => renderExploreStep1(grade);
+
+  content.innerHTML = `
+    <div class="flex items-center justify-center py-16">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent"></div>
+    </div>
+  `;
 
   try {
     let chapters = [];
     if (subject.isMock) {
       const subId = subject.id;
-      if (subId.endsWith('-math')) {
+      if (subId.endsWith('-math') || subId.includes('jee-math')) {
         chapters = [
           { id: subId + '-chap-1', name: 'Foundational Numbers & Logic', subject_id: subId, isMock: true },
           { id: subId + '-chap-2', name: 'Basic Operations & Arithmetic', subject_id: subId, isMock: true },
           { id: subId + '-chap-3', name: 'Practice Test Problems', subject_id: subId, isMock: true }
         ];
-      } else if (subId.endsWith('-sci') || subId.endsWith('-evs') || subId.endsWith('-phys') || subId.endsWith('-chem') || subId.endsWith('-bio')) {
+      } else if (subId.endsWith('-sci') || subId.endsWith('-evs') || subId.endsWith('-phys') || subId.endsWith('-chem') || subId.endsWith('-bio') || subId.includes('phys') || subId.includes('chem') || subId.includes('bio')) {
         chapters = [
           { id: subId + '-chap-1', name: 'Introduction to Core Concepts', subject_id: subId, isMock: true },
           { id: subId + '-chap-2', name: 'Experimental Observation Exercises', subject_id: subId, isMock: true },
@@ -608,96 +677,68 @@ window.selectSubjectForBrowse = async function(subject, grade) {
     } else {
       chapters = await dbRequest(`chapters?subject_id=eq.${subject.id}&order=name.asc&limit=100`);
       if (!chapters.length) {
-        // Fallback for real subject if no chapters found yet
         chapters = [
           { id: `mock-chap-sub-${subject.id}-1`, name: 'Mock Chapter: Introduction & Overview', subject_id: subject.id, isMock: true },
           { id: `mock-chap-sub-${subject.id}-2`, name: 'Mock Chapter: Core Practice Exercises', subject_id: subject.id, isMock: true }
         ];
       }
     }
-    chaptersGrid.innerHTML = '';
+
+    const list = document.createElement('div');
+    list.className = 'space-y-2.5 py-2';
 
     chapters.forEach(chap => {
       const card = document.createElement('div');
-      card.className = 'card p-4 rounded-xl flex items-center justify-between group cursor-pointer transition-all border border-slate-200 hover:border-indigo-300';
+      card.className = 'card p-4 rounded-xl flex items-center justify-between group cursor-pointer transition-all border border-slate-100 hover:border-indigo-300 hover:bg-slate-50/50';
       card.innerHTML = `
         <div class="flex items-center gap-3">
           <span class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">📖</span>
           <div>
-            <h4 class="font-bold text-sm text-slate-850 group-hover:text-indigo-600 transition-colors">${chap.name}</h4>
-            <p class="text-[10px] text-slate-400 mt-0.5">Click to configure test parameters</p>
+            <h4 class="font-bold text-sm text-slate-800 group-hover:text-indigo-600 transition-colors">${chap.name}</h4>
+            <p class="text-[10px] text-slate-400 mt-0.5">Click to configure parameters & start</p>
           </div>
         </div>
-        <span class="text-indigo-500 font-bold text-xs group-hover:translate-x-1 transition-transform">Configure →</span>
+        <span class="text-indigo-500 font-bold text-xs group-hover:translate-x-1 transition-transform">Select →</span>
       `;
-      card.onclick = () => launchQuizConfig(chap);
-      chaptersGrid.appendChild(card);
+      card.onclick = () => {
+        currentExploreChapter = chap;
+        renderExploreStep3(chap, subject, grade);
+      };
+      list.appendChild(card);
     });
+
+    content.innerHTML = '';
+    content.appendChild(list);
 
   } catch (err) {
     console.error(err);
-    chaptersGrid.innerHTML = '<div class="col-span-full text-center text-xs text-red-500 py-8">Failed to load chapters.</div>';
-  }
-};
-
-// Render Chapters list inside a bottom sheet modal
-async function loadChaptersModal(subject) {
-  try {
-    const chapters = await dbRequest(`chapters?subject_id=eq.${subject.id}`);
-    
-    // Create popup dialog dynamically
-    const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4';
-    
-    const content = document.createElement('div');
-    content.className = 'w-full max-w-lg glass-card p-8 rounded-2xl shadow-2xl relative space-y-6';
-    content.innerHTML = `
-      <div class="flex items-center justify-between border-b border-white/5 pb-4">
-        <div>
-          <h3 class="text-xl font-bold text-white">${subject.name}</h3>
-          <p class="text-slate-500 text-xs mt-0.5">Select a chapter to practice</p>
-        </div>
-        <button id="close-chap-popup" class="p-1 text-slate-400 hover:text-white">✕</button>
-      </div>
-      <div class="max-h-[300px] overflow-y-auto space-y-2 pr-2" id="chapters-list-container">
-        Loading chapters...
-      </div>
-    `;
-
-    overlay.appendChild(content);
-    document.body.appendChild(overlay);
-
-    document.getElementById('close-chap-popup').onclick = () => overlay.remove();
-
-    const listContainer = content.querySelector('#chapters-list-container');
-    listContainer.innerHTML = '';
-
-    if (!chapters.length) {
-      listContainer.innerHTML = '<p class="text-xs text-slate-500 py-4 text-center">No chapters found.</p>';
-      return;
-    }
-
-    chapters.forEach(chap => {
-      const btn = document.createElement('button');
-      btn.className = 'w-full text-left p-3.5 rounded-xl border border-white/5 bg-slate-900/40 hover:bg-slate-900/80 text-sm font-semibold text-slate-200 transition-all flex items-center justify-between group';
-      btn.innerHTML = `
-        <span>${chap.name}</span>
-        <span class="text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">Select →</span>
-      `;
-      btn.onclick = () => {
-        overlay.remove();
-        launchQuizConfig(chap);
-      };
-      listContainer.appendChild(btn);
-    });
-
-  } catch (err) {
-    showToast('Error', 'Failed to retrieve chapters for this subject.', '⚠️');
+    content.innerHTML = `<div class="text-center py-16 text-red-500 text-sm">Failed to load chapters. Error: ${err.message}</div>`;
   }
 }
 
-// Config Sheet Logic
-async function launchQuizConfig(chapter) {
+// Step 3: Render custom options
+async function renderExploreStep3(chapter, subject, grade) {
+  const stepIndicator = document.getElementById('explore-step-indicator');
+  const pathIndicator = document.getElementById('explore-path-indicator');
+  const title = document.getElementById('explore-modal-title');
+  const subtitle = document.getElementById('explore-modal-subtitle');
+  const backBtn = document.getElementById('explore-back-btn');
+  const content = document.getElementById('explore-modal-content');
+
+  stepIndicator.innerText = 'Step 3 of 3';
+  pathIndicator.innerText = chapter.name;
+  title.innerText = 'Configure Quiz';
+  subtitle.innerText = 'Customize question counts, mode and difficulty limits before starting.';
+  
+  backBtn.classList.remove('hidden');
+  backBtn.onclick = () => renderExploreStep2(subject, grade);
+
+  content.innerHTML = `
+    <div class="flex items-center justify-center py-16">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent"></div>
+    </div>
+  `;
+
   try {
     let quizzes = [];
     let questions = [];
@@ -712,7 +753,6 @@ async function launchQuizConfig(chapter) {
     } else {
       quizzes = await dbRequest(`quizzes?chapter_id=eq.${chapter.id}`);
       if (!quizzes.length) {
-        // Fallback mock questions so it never fails or blocks the user!
         quizzes = [{ id: `mock-quiz-${chapter.id}`, name: chapter.name }];
         questions = [
           { id: 'mock-q1', question: `Which of the following is correct regarding "${chapter.name}"?`, option_a: 'Option A (Recommended Correct)', option_b: 'Option B', option_c: 'Option C', option_d: 'Option D', correct_option: 'A', difficulty: 'easy' },
@@ -731,25 +771,13 @@ async function launchQuizConfig(chapter) {
 
     const quiz = quizzes[0];
 
-    // Create a configuration modal
-    const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4';
-    
-    const content = document.createElement('div');
-    content.className = 'w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl space-y-6 border border-slate-200';
-    content.innerHTML = `
-      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
-        <div>
-          <h3 class="text-lg font-bold text-slate-900">Configure Quiz</h3>
-          <p class="text-slate-500 text-xs mt-0.5">${chapter.name} · ${questions.length} questions available</p>
-        </div>
-        <button id="close-cfg-popup" class="p-1 text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-
+    const form = document.createElement('div');
+    form.className = 'space-y-6 py-2';
+    form.innerHTML = `
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Difficulty filter</label>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap gap-2" id="cfg-diff-container">
             <button class="diff-chip active px-3 py-1.5 rounded-lg border border-indigo-500 bg-indigo-50 text-indigo-700 font-bold text-xs uppercase" data-diff="mixed">Mixed</button>
             <button class="diff-chip px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 font-bold text-xs uppercase" data-diff="easy">Easy</button>
             <button class="diff-chip px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 font-bold text-xs uppercase" data-diff="moderate">Moderate</button>
@@ -760,42 +788,38 @@ async function launchQuizConfig(chapter) {
 
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Number of Questions</label>
-          <div class="flex gap-2">
-            <input type="number" id="cfg-count" value="10" min="1" max="100" class="w-20 px-3 py-2 border border-slate-200 bg-slate-50 rounded-lg text-slate-700 text-xs font-bold text-center">
-            <button class="cnt-pill px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs" data-val="5">5</button>
-            <button class="cnt-pill px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs" data-val="10">10</button>
-            <button class="cnt-pill px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs" data-val="50">50</button>
-            <button class="cnt-pill px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs" data-val="100">100</button>
+          <div class="flex items-center gap-2">
+            <input type="number" id="cfg-count" value="10" min="1" max="100" class="w-16 px-2 py-2 border border-slate-200 bg-slate-50 rounded-lg text-slate-700 text-xs font-bold text-center">
+            <button class="cnt-pill px-2.5 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs transition-all" data-val="5">5</button>
+            <button class="cnt-pill px-2.5 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs transition-all" data-val="10">10</button>
+            <button class="cnt-pill px-2.5 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs transition-all" data-val="25">25</button>
+            <button class="cnt-pill px-2.5 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs transition-all" data-val="50">50</button>
+            <button class="cnt-pill px-2.5 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-slate-500 font-bold text-xs transition-all" data-val="100">100</button>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Mode</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Quiz Mode</label>
           <div class="grid grid-cols-2 gap-3">
             <label class="border-2 border-indigo-500 bg-indigo-50 p-3 rounded-xl flex flex-col text-left cursor-pointer transition-all" id="mode-card-practice">
               <input type="radio" name="cfg-mode" value="practice" checked class="hidden">
               <span class="text-xs font-bold text-indigo-700">Practice Mode</span>
-              <span class="text-[9px] text-indigo-400 leading-none mt-1">No timer, relax</span>
+              <span class="text-[9px] text-indigo-400 leading-none mt-1">No timer, relax & learn</span>
             </label>
             <label class="border border-slate-200 bg-slate-50 hover:bg-slate-100 p-3 rounded-xl flex flex-col text-left cursor-pointer transition-all" id="mode-card-timed">
               <input type="radio" name="cfg-mode" value="timed" class="hidden">
               <span class="text-xs font-bold text-slate-700">Timed Mode</span>
-              <span class="text-[9px] text-slate-400 leading-none mt-1">Countdown timer</span>
+              <span class="text-[9px] text-slate-400 leading-none mt-1">Countdown test challenge</span>
             </label>
           </div>
         </div>
       </div>
 
-      <button id="start-quiz-btn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-100 uppercase tracking-widest">Start Quiz</button>
+      <button id="start-quiz-btn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-100 uppercase tracking-widest">Start Quiz Session</button>
     `;
 
-    overlay.appendChild(content);
-    document.body.appendChild(overlay);
-
-    document.getElementById('close-cfg-popup').onclick = () => overlay.remove();
-
-    // Toggle logic for diff chips
-    const chips = content.querySelectorAll('.diff-chip');
+    // Bind event handlers inside the step
+    const chips = form.querySelectorAll('.diff-chip');
     let selectedDiff = 'mixed';
     chips.forEach(c => {
       c.onclick = () => {
@@ -808,19 +832,17 @@ async function launchQuizConfig(chapter) {
       };
     });
 
-    // Count stepper pills
-    const inputCount = content.querySelector('#cfg-count');
-    const pills = content.querySelectorAll('.cnt-pill');
+    const inputCount = form.querySelector('#cfg-count');
+    const pills = form.querySelectorAll('.cnt-pill');
     pills.forEach(p => {
       p.onclick = () => {
         inputCount.value = p.getAttribute('data-val');
       };
     });
 
-    // Mode selects
-    const modePractice = content.querySelector('#mode-card-practice');
-    const modeTimed = content.querySelector('#mode-card-timed');
-    const modeInputs = content.querySelectorAll('input[name="cfg-mode"]');
+    const modePractice = form.querySelector('#mode-card-practice');
+    const modeTimed = form.querySelector('#mode-card-timed');
+    const modeInputs = form.querySelectorAll('input[name="cfg-mode"]');
 
     modeInputs.forEach(i => {
       i.onchange = () => {
@@ -834,14 +856,18 @@ async function launchQuizConfig(chapter) {
       };
     });
 
-    // Start action
-    content.querySelector('#start-quiz-btn').onclick = () => {
-      overlay.remove();
-      setupQuizSession(quiz, questions, selectedDiff, parseInt(inputCount.value), content.querySelector('input[name="cfg-mode"]:checked').value);
+    // Start Action
+    form.querySelector('#start-quiz-btn').onclick = () => {
+      closeExplorationModal();
+      setupQuizSession(quiz, questions, selectedDiff, parseInt(inputCount.value), form.querySelector('input[name="cfg-mode"]:checked').value);
     };
 
+    content.innerHTML = '';
+    content.appendChild(form);
+
   } catch (err) {
-    showToast('Error', 'Failed to retrieve quiz configurations.', '⚠️');
+    console.error(err);
+    content.innerHTML = `<div class="text-center py-16 text-red-500 text-sm">Failed to load quiz config. Error: ${err.message}</div>`;
   }
 }
 
@@ -1535,6 +1561,7 @@ document.getElementById('dashboard-edit-profile').onclick = () => {
 document.getElementById('signup-form').onsubmit = async (e) => {
   e.preventDefault();
   const name = document.getElementById('signup-name').value;
+  const studentClass = document.getElementById('signup-class').value;
   const email = document.getElementById('signup-email').value;
   const password = document.getElementById('signup-password').value;
 
@@ -1565,6 +1592,7 @@ document.getElementById('signup-form').onsubmit = async (e) => {
         id: authUser.id,
         name,
         email,
+        bio: studentClass, // Save class in bio field
         role: isAdmin ? 'SUPER_ADMIN' : 'USER',
         coins: isAdmin ? 9999 : 100,
         favorite_subjects: []
@@ -1640,7 +1668,7 @@ document.getElementById('login-form').onsubmit = async (e) => {
 };
 
 // Real Google OAuth redirect via InsForge Auth
-document.getElementById('google-login-btn').onclick = async () => {
+const handleGoogleAuth = async () => {
   try {
     const { data, error } = await insforge.auth.signInWithOAuth('google', {
       redirectTo: window.location.origin + window.location.pathname
@@ -1652,6 +1680,13 @@ document.getElementById('google-login-btn').onclick = async () => {
     console.error('Google OAuth init error:', err);
   }
 };
+
+if (document.getElementById('google-login-btn')) {
+  document.getElementById('google-login-btn').onclick = handleGoogleAuth;
+}
+if (document.getElementById('google-signup-btn')) {
+  document.getElementById('google-signup-btn').onclick = handleGoogleAuth;
+}
 
 // Forgot Password execution
 document.getElementById('forgot-form').onsubmit = async (e) => {
@@ -1726,6 +1761,7 @@ document.getElementById('onboard-form').onsubmit = async (e) => {
   e.preventDefault();
   const username = document.getElementById('onboard-username').value;
   const level = document.querySelector('input[name="onboard-level"]:checked').value;
+  const studentClass = document.getElementById('onboard-class').value;
 
   try {
     const check = await dbRequest(`users?username=eq.${encodeURIComponent(username)}`);
@@ -1738,12 +1774,14 @@ document.getElementById('onboard-form').onsubmit = async (e) => {
       method: 'PATCH',
       body: JSON.stringify({
         username: username,
-        skill_level: level
+        skill_level: level,
+        bio: studentClass // Save class in bio field
       })
     });
 
     currentUser.username = username;
     currentUser.skill_level = level;
+    currentUser.bio = studentClass;
     localStorage.setItem('userSession', JSON.stringify(currentUser));
     
     document.getElementById('onboard-modal').classList.add('hidden');
