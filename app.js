@@ -275,7 +275,21 @@ function updateNavbar() {
   if (currentUser) {
     loggedOut.classList.add('hidden');
     loggedIn.classList.remove('hidden');
-    document.getElementById('nav-profile-btn').innerText = currentUser.name ? currentUser.name[0].toUpperCase() : 'U';
+    
+    const profileInitial = document.getElementById('nav-profile-initial');
+    const profileImg = document.getElementById('nav-profile-img');
+    if (profileInitial && profileImg) {
+      profileInitial.innerText = currentUser.name ? currentUser.name[0].toUpperCase() : 'U';
+      if (currentUser.avatar) {
+        profileImg.src = currentUser.avatar;
+        profileImg.classList.remove('hidden');
+        profileInitial.classList.add('hidden');
+      } else {
+        profileImg.classList.add('hidden');
+        profileInitial.classList.remove('hidden');
+      }
+    }
+
     document.getElementById('nav-coins').innerText = currentUser.coins || 0;
     document.getElementById('nav-xp').innerText = `${currentUser.xp || 0} XP`;
 
@@ -777,6 +791,7 @@ async function launchQuizConfig(chapter) {
       <button id="start-quiz-btn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-100 uppercase tracking-widest">Start Quiz</button>
     `;
 
+    overlay.appendChild(content);
     document.body.appendChild(overlay);
 
     document.getElementById('close-cfg-popup').onclick = () => overlay.remove();
@@ -1098,6 +1113,21 @@ async function submitQuizAnswers() {
 // User Dashboard View Loader
 async function loadUserDashboard() {
   document.getElementById('dashboard-welcome').innerText = `Hello, ${currentUser.name || 'User'}!`;
+  
+  const dashInitial = document.getElementById('dashboard-avatar-initial');
+  const dashImg = document.getElementById('dashboard-avatar-img');
+  if (dashInitial && dashImg) {
+    dashInitial.innerText = currentUser.name ? currentUser.name[0].toUpperCase() : 'U';
+    if (currentUser.avatar) {
+      dashImg.src = currentUser.avatar;
+      dashImg.classList.remove('hidden');
+      dashInitial.classList.add('hidden');
+    } else {
+      dashImg.classList.add('hidden');
+      dashInitial.classList.remove('hidden');
+    }
+  }
+
   document.getElementById('stat-quizzes').innerText = '0';
   document.getElementById('stat-accuracy').innerText = '0%';
   document.getElementById('stat-streak').innerText = currentUser.streak || 0;
@@ -1200,12 +1230,22 @@ async function loadFullLeaderboard() {
       return;
     }
 
+    const setPodiumAvatar = (elementId, avatar) => {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      if (avatar && avatar.length > 5) {
+        el.innerHTML = `<img src="${avatar}" class="w-full h-full object-cover rounded-full">`;
+      } else {
+        el.innerHTML = avatar || '🧑‍🎓';
+      }
+    };
+
     // Populate Podium 1st, 2nd, 3rd
     if (users[0] && p1 && b1) {
       const u = users[0];
       document.getElementById('podium-name-1').innerText = u.name || u.username || 'Student';
       document.getElementById('podium-score-1').innerText = `${u.xp || 0} ⭐`;
-      document.getElementById('podium-avatar-1').innerText = u.avatar || '🧑‍🎓';
+      setPodiumAvatar('podium-avatar-1', u.avatar);
       p1.classList.remove('hidden');
       setTimeout(() => {
         b1.style.height = '150px';
@@ -1216,7 +1256,7 @@ async function loadFullLeaderboard() {
       const u = users[1];
       document.getElementById('podium-name-2').innerText = u.name || u.username || 'Student';
       document.getElementById('podium-score-2').innerText = `${u.xp || 0} ⭐`;
-      document.getElementById('podium-avatar-2').innerText = u.avatar || '🧑‍🎓';
+      setPodiumAvatar('podium-avatar-2', u.avatar);
       p2.classList.remove('hidden');
       setTimeout(() => {
         b2.style.height = '110px';
@@ -1227,7 +1267,7 @@ async function loadFullLeaderboard() {
       const u = users[2];
       document.getElementById('podium-name-3').innerText = u.name || u.username || 'Student';
       document.getElementById('podium-score-3').innerText = `${u.xp || 0} ⭐`;
-      document.getElementById('podium-avatar-3').innerText = u.avatar || '🧑‍🎓';
+      setPodiumAvatar('podium-avatar-3', u.avatar);
       p3.classList.remove('hidden');
       setTimeout(() => {
         b3.style.height = '80px';
@@ -1243,12 +1283,15 @@ async function loadFullLeaderboard() {
 
     restUsers.forEach((u, idx) => {
       const rank = idx + 4;
+      const avatarHtml = u.avatar && u.avatar.length > 5
+        ? `<img src="${u.avatar}" class="w-full h-full object-cover rounded-full">`
+        : u.avatar || '🧑‍🎓';
       const div = document.createElement('div');
       div.className = 'flex items-center justify-between p-4 hover:bg-slate-50 transition-colors';
       div.innerHTML = `
         <div class="flex items-center gap-4">
           <span class="w-6 text-center text-xs font-extrabold text-slate-400">#${rank}</span>
-          <span class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-700">${u.avatar || '🧑‍🎓'}</span>
+          <span class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-700 overflow-hidden">${avatarHtml}</span>
           <div>
             <p class="text-sm font-bold text-slate-800">${u.name || u.username}</p>
             <p class="text-[10px] text-slate-400">Level: ${u.level || 'Bronze'}</p>
@@ -1362,32 +1405,109 @@ function loadFaqAccordion() {
 
 // User Dashboard edit profiles modal popup
 document.getElementById('dashboard-edit-profile').onclick = () => {
-  const subjects = ['Chemistry', 'Physics', 'Biology', 'Mathematics'];
-  const favs = currentUser.favorite_subjects || [];
-  
   const overlay = document.createElement('div');
   overlay.className = 'fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4';
+  
+  let selectedAvatar = currentUser.avatar || '';
+  const emojis = ['🧑‍🎓', '🦊', '🦁', '🐯', '🐼', '🐨', '🦄', '🚀', '🩺', '🧪'];
+  
+  // Create beautiful emoji chips HTML
+  let emojiHtml = '';
+  emojis.forEach(emo => {
+    const isActive = (selectedAvatar === emo) || (!selectedAvatar && emo === '🧑‍🎓');
+    const activeClass = isActive ? 'border-indigo-500 bg-indigo-900/40 scale-110 text-xl shadow-md' : 'border-white/5 bg-slate-900/60 hover:border-indigo-400 hover:bg-slate-900/80 text-lg';
+    emojiHtml += `<button type="button" class="avatar-chip w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${activeClass}" data-avatar="${emo}">${emo}</button>`;
+  });
+
+  const previewHtml = selectedAvatar && selectedAvatar.length > 5 
+    ? `<img id="edit-avatar-preview-img" src="${selectedAvatar}" class="w-14 h-14 rounded-full object-cover border-2 border-indigo-500">`
+    : `<span id="edit-avatar-preview-text" class="w-14 h-14 rounded-full bg-indigo-900/50 text-white border-2 border-indigo-500 flex items-center justify-center text-2xl font-black">${selectedAvatar || '🧑‍🎓'}</span>`;
+
   overlay.innerHTML = `
-    <div class="w-full max-w-md glass-card p-8 rounded-2xl shadow-2xl space-y-6">
+    <div class="w-full max-w-md glass-card p-8 rounded-2xl shadow-2xl space-y-6 text-left">
       <div class="flex items-center justify-between border-b border-white/5 pb-4">
         <h3 class="text-lg font-bold text-white">Edit Profile Details</h3>
         <button id="close-profile-popup" class="p-1 text-slate-400 hover:text-white">✕</button>
       </div>
       <div class="space-y-4">
+        <!-- Avatar Section -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Profile Avatar</label>
+          <div class="flex items-center gap-4 mb-4">
+            <div id="edit-avatar-preview-container" class="shrink-0 flex items-center justify-center">
+              ${previewHtml}
+            </div>
+            <div class="space-y-1.5">
+              <button type="button" id="trigger-avatar-upload" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-900/20">Upload Custom Image</button>
+              <input type="file" id="edit-avatar-upload" class="hidden" accept="image/*">
+              <p class="text-[10px] text-slate-500">Supports PNG, JPG, or WEBP up to 2MB.</p>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-5 gap-2 mt-2">
+            ${emojiHtml}
+          </div>
+        </div>
+
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Profile Name</label>
-          <input type="text" id="edit-name" class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 text-sm" value="${currentUser.name || ''}">
+          <input type="text" id="edit-name" class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 text-sm focus:border-indigo-500 focus:outline-none" value="${currentUser.name || ''}">
         </div>
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Bio Details</label>
-          <textarea id="edit-bio" rows="3" class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 text-sm">${currentUser.bio || ''}</textarea>
+          <textarea id="edit-bio" rows="3" class="block w-full px-4 py-3 rounded-xl border border-white/5 bg-slate-900/60 text-slate-200 text-sm focus:border-indigo-500 focus:outline-none">${currentUser.bio || ''}</textarea>
         </div>
       </div>
-      <button id="save-profile-btn" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-md">Save Changes</button>
+      <button id="save-profile-btn" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-md transition-all">Save Changes</button>
     </div>
   `;
+
   document.body.appendChild(overlay);
   document.getElementById('close-profile-popup').onclick = () => overlay.remove();
+
+  // Emoji chips interactive selection
+  const chips = overlay.querySelectorAll('.avatar-chip');
+  chips.forEach(c => {
+    c.onclick = () => {
+      chips.forEach(x => {
+        x.className = 'avatar-chip w-10 h-10 rounded-xl border flex items-center justify-center transition-all border-white/5 bg-slate-900/60 hover:border-indigo-400 hover:bg-slate-900/80 text-lg';
+      });
+      c.className = 'avatar-chip w-10 h-10 rounded-xl border flex items-center justify-center transition-all border-indigo-500 bg-indigo-900/40 scale-110 text-xl shadow-md';
+      selectedAvatar = c.getAttribute('data-avatar');
+      
+      // Update preview to show selected emoji
+      document.getElementById('edit-avatar-preview-container').innerHTML = `
+        <span id="edit-avatar-preview-text" class="w-14 h-14 rounded-full bg-indigo-900/50 text-white border-2 border-indigo-500 flex items-center justify-center text-2xl font-black">${selectedAvatar}</span>
+      `;
+    };
+  });
+
+  // Custom Image File upload reader
+  const fileInput = overlay.querySelector('#edit-avatar-upload');
+  overlay.querySelector('#trigger-avatar-upload').onclick = () => fileInput.click();
+  
+  fileInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('File Too Large', 'Please select an image smaller than 2MB.', '⚠️');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      selectedAvatar = reader.result; // base64 representation
+      
+      // Update preview to show custom image
+      document.getElementById('edit-avatar-preview-container').innerHTML = `
+        <img id="edit-avatar-preview-img" src="${selectedAvatar}" class="w-14 h-14 rounded-full object-cover border-2 border-indigo-500">
+      `;
+      // Deselect emoji chips
+      chips.forEach(x => {
+        x.className = 'avatar-chip w-10 h-10 rounded-xl border flex items-center justify-center transition-all border-white/5 bg-slate-900/60 hover:border-indigo-400 hover:bg-slate-900/80 text-lg';
+      });
+    };
+    reader.readAsDataURL(file);
+  };
 
   overlay.querySelector('#save-profile-btn').onclick = async () => {
     const name = overlay.querySelector('#edit-name').value;
@@ -1396,14 +1516,16 @@ document.getElementById('dashboard-edit-profile').onclick = () => {
     try {
       await dbRequest(`users?id=eq.${currentUser.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ name, bio })
+        body: JSON.stringify({ name, bio, avatar: selectedAvatar })
       });
 
       currentUser.name = name;
       currentUser.bio = bio;
+      currentUser.avatar = selectedAvatar;
       localStorage.setItem('userSession', JSON.stringify(currentUser));
       overlay.remove();
       showToast('Profile Updated', 'Your profile details have been saved successfully.', '✓');
+      updateNavbar();
       loadUserDashboard();
     } catch (err) {
       showToast('Error', 'Failed to update profile settings.', '⚠️');
