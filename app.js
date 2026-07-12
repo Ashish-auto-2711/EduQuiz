@@ -30,6 +30,10 @@ let quizAnswers = []; // user selected options
 let quizBookmarks = new Set();
 let quizTimer = null;
 let quizTimeRemaining = 0;
+let quizNegativeMarking = 0; // 0, 0.25, 0.5, 1
+let quizTimerType = 'global'; // 'global' or 'question'
+let quizPerQuestionTimer = 0; // seconds per question
+let quizQuestionTimeRemaining = 0; // for per-question timer
 let accuracyChart = null;
 
 // Simulated categories for showcase if DB is empty
@@ -399,6 +403,42 @@ let currentExploreGrade = null;
 let currentExploreSubject = null;
 let currentExploreChapter = null;
 
+// Open Chapters view directly inside Exploration Modal (Step 2)
+window.loadChaptersModal = function(subject) {
+  let grade = 12;
+  if (subject.name.includes('Class 9')) grade = 9;
+  else if (subject.name.includes('Class 10')) grade = 10;
+  else if (subject.name.includes('Class 11')) grade = 11;
+
+  currentExploreGrade = grade;
+  currentExploreSubject = subject;
+  currentExploreChapter = null;
+
+  const modal = document.getElementById('exploration-modal');
+  const card = document.getElementById('explore-modal-card');
+  
+  modal.classList.remove('hidden');
+  // Trigger animation reflow
+  setTimeout(() => {
+    card.classList.remove('scale-95', 'opacity-0');
+    card.classList.add('scale-100', 'opacity-100');
+  }, 10);
+
+  // Close handlers
+  document.getElementById('close-exploration-modal').onclick = closeExplorationModal;
+  
+  // Esc key closure
+  const handleEsc = (e) => {
+    if (e.key === 'Escape') {
+      closeExplorationModal();
+      document.removeEventListener('keydown', handleEsc);
+    }
+  };
+  document.addEventListener('keydown', handleEsc);
+
+  renderExploreStep2(subject, grade);
+};
+
 // Open Exploration Modal
 window.selectClassForBrowse = function(grade) {
   currentExploreGrade = grade;
@@ -501,8 +541,13 @@ async function renderExploreStep1(grade) {
     } else {
       // Fetch Class 9, 10, 11, 12 or JEE, NEET from database
       const allSubjects = await dbRequest('subjects?limit=100');
+      const cleanAll = allSubjects.filter(s => !s.name.includes('Test Subject'));
+
       if (grade === 'JEE') {
-        subjects = allSubjects.filter(s => (s.name.includes('Class 11') || s.name.includes('Class 12')) && (s.name.includes('Physics') || s.name.includes('Chemistry') || s.name.includes('Mathematics')));
+        subjects = cleanAll.filter(s => 
+          (s.name.includes('Class 11') || (!s.name.includes('Class 9') && !s.name.includes('Class 10') && !s.name.includes('Class 11'))) && 
+          (s.name.includes('Physics') || s.name.includes('Chemistry') || s.name.includes('Mathematics') || s.name.includes('Maths'))
+        );
         if (!subjects.length) {
           subjects = [
             { id: 'mock-sub-jee-math', name: 'JEE Mathematics (JEE)', isMock: true },
@@ -511,7 +556,10 @@ async function renderExploreStep1(grade) {
           ];
         }
       } else if (grade === 'NEET') {
-        subjects = allSubjects.filter(s => (s.name.includes('Class 11') || s.name.includes('Class 12')) && (s.name.includes('Physics') || s.name.includes('Chemistry') || s.name.includes('Biology')));
+        subjects = cleanAll.filter(s => 
+          (s.name.includes('Class 11') || (!s.name.includes('Class 9') && !s.name.includes('Class 10') && !s.name.includes('Class 11'))) && 
+          (s.name.includes('Physics') || s.name.includes('Chemistry') || s.name.includes('Biology'))
+        );
         if (!subjects.length) {
           subjects = [
             { id: 'mock-sub-neet-bio', name: 'NEET Biology (NEET)', isMock: true },
@@ -519,8 +567,17 @@ async function renderExploreStep1(grade) {
             { id: 'mock-sub-neet-chem', name: 'NEET Chemistry (NEET)', isMock: true }
           ];
         }
+      } else if (parseInt(grade) === 12) {
+        subjects = cleanAll.filter(s => !s.name.includes('Class 9') && !s.name.includes('Class 10') && !s.name.includes('Class 11'));
+        if (!subjects.length) {
+          subjects = [
+            { id: `mock-sub-${grade}-phys`, name: `Physics (Class ${grade})`, isMock: true },
+            { id: `mock-sub-${grade}-chem`, name: `Chemistry (Class ${grade})`, isMock: true },
+            { id: `mock-sub-${grade}-bio`, name: `Biology (Class ${grade})`, isMock: true }
+          ];
+        }
       } else {
-        subjects = allSubjects.filter(s => s.name.includes(`Class ${grade}`));
+        subjects = cleanAll.filter(s => s.name.includes(`Class ${grade}`));
         if (!subjects.length) {
           subjects = [
             { id: `mock-sub-${grade}-math`, name: `Mathematics (Class ${grade})`, isMock: true },
@@ -813,6 +870,38 @@ async function renderExploreStep3(chapter, subject, grade) {
             </label>
           </div>
         </div>
+
+        <!-- Advanced Timer Settings -->
+        <div id="advanced-timer-section" class="hidden space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Timer Type</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" class="timer-type-btn active py-2 rounded-lg border border-indigo-500 bg-indigo-50 text-indigo-700 font-bold text-xs" data-type="global">Global Timer</button>
+              <button type="button" class="timer-type-btn py-2 rounded-lg border border-slate-200 bg-white text-slate-500 font-bold text-xs" data-type="question">Per Question</button>
+            </div>
+          </div>
+          <div id="timer-duration-wrapper">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5" id="timer-val-label">Global Duration</label>
+            <select id="cfg-timer-value" class="block w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400">
+              <option value="300" selected>5 Minutes</option>
+              <option value="600">10 Minutes</option>
+              <option value="900">15 Minutes</option>
+              <option value="1800">30 Minutes</option>
+              <option value="3600">60 Minutes</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Negative Marking Selection -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Negative Marking</label>
+          <select id="cfg-negative-marking" class="block w-full px-3 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+            <option value="0" selected>Disabled (No Penalty)</option>
+            <option value="0.25">Enabled (-0.25 Marks per Error)</option>
+            <option value="0.5">Enabled (-0.50 Marks per Error)</option>
+            <option value="1">Enabled (-1.00 Marks per Error)</option>
+          </select>
+        </div>
       </div>
 
       <button id="start-quiz-btn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-indigo-100 uppercase tracking-widest">Start Quiz Session</button>
@@ -843,15 +932,55 @@ async function renderExploreStep3(chapter, subject, grade) {
     const modePractice = form.querySelector('#mode-card-practice');
     const modeTimed = form.querySelector('#mode-card-timed');
     const modeInputs = form.querySelectorAll('input[name="cfg-mode"]');
+    const advTimerSection = form.querySelector('#advanced-timer-section');
 
     modeInputs.forEach(i => {
       i.onchange = () => {
         if (i.value === 'practice') {
           modePractice.className = 'border-2 border-indigo-500 bg-indigo-50 p-3 rounded-xl flex flex-col text-left cursor-pointer';
           modeTimed.className = 'border border-slate-200 bg-slate-50 hover:bg-slate-100 p-3 rounded-xl flex flex-col text-left cursor-pointer';
+          advTimerSection.classList.add('hidden');
         } else {
           modeTimed.className = 'border-2 border-indigo-500 bg-indigo-50 p-3 rounded-xl flex flex-col text-left cursor-pointer';
           modePractice.className = 'border border-slate-200 bg-slate-50 hover:bg-slate-100 p-3 rounded-xl flex flex-col text-left cursor-pointer';
+          advTimerSection.classList.remove('hidden');
+        }
+      };
+    });
+
+    // Toggle timer type
+    const timerTypeBtns = form.querySelectorAll('.timer-type-btn');
+    const timerValLabel = form.querySelector('#timer-val-label');
+    const timerValueSelect = form.querySelector('#cfg-timer-value');
+    let selectedTimerType = 'global';
+
+    timerTypeBtns.forEach(btn => {
+      btn.onclick = () => {
+        timerTypeBtns.forEach(x => {
+          x.classList.remove('active', 'border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+          x.classList.add('border-slate-200', 'bg-white', 'text-slate-500');
+        });
+        btn.classList.add('active', 'border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+        btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-500');
+        
+        selectedTimerType = btn.getAttribute('data-type');
+        if (selectedTimerType === 'global') {
+          timerValLabel.innerText = 'Global Duration';
+          timerValueSelect.innerHTML = `
+            <option value="300" selected>5 Minutes</option>
+            <option value="600">10 Minutes</option>
+            <option value="900">15 Minutes</option>
+            <option value="1800">30 Minutes</option>
+            <option value="3600">60 Minutes</option>
+          `;
+        } else {
+          timerValLabel.innerText = 'Time per Question';
+          timerValueSelect.innerHTML = `
+            <option value="15">15 Seconds</option>
+            <option value="30" selected>30 Seconds</option>
+            <option value="45">45 Seconds</option>
+            <option value="60">60 Seconds</option>
+          `;
         }
       };
     });
@@ -859,7 +988,21 @@ async function renderExploreStep3(chapter, subject, grade) {
     // Start Action
     form.querySelector('#start-quiz-btn').onclick = () => {
       closeExplorationModal();
-      setupQuizSession(quiz, questions, selectedDiff, parseInt(inputCount.value), form.querySelector('input[name="cfg-mode"]:checked').value);
+      
+      const negativeMarking = form.querySelector('#cfg-negative-marking').value;
+      const mode = form.querySelector('input[name="cfg-mode"]:checked').value;
+      const timerValue = form.querySelector('#cfg-timer-value').value;
+
+      setupQuizSession(
+        quiz,
+        questions,
+        selectedDiff,
+        parseInt(inputCount.value),
+        mode,
+        negativeMarking,
+        selectedTimerType,
+        parseInt(timerValue)
+      );
     };
 
     content.innerHTML = '';
@@ -872,7 +1015,7 @@ async function renderExploreStep3(chapter, subject, grade) {
 }
 
 // Setup Active Quiz Session
-function setupQuizSession(quiz, allQuestions, diff, count, mode) {
+function setupQuizSession(quiz, allQuestions, diff, count, mode, negativeMarking, timerType, timerValue) {
   let filtered = [...allQuestions];
   if (diff !== 'mixed') {
     filtered = allQuestions.filter(q => q.difficulty === diff);
@@ -891,6 +1034,19 @@ function setupQuizSession(quiz, allQuestions, diff, count, mode) {
   quizAnswers = new Array(filtered.length).fill(null);
   quizBookmarks.clear();
 
+  // Set advanced configuration states
+  quizNegativeMarking = parseFloat(negativeMarking || 0);
+  quizTimerType = timerType || 'global';
+  
+  if (mode === 'timed') {
+    if (quizTimerType === 'question') {
+      quizPerQuestionTimer = parseInt(timerValue || 30);
+      quizQuestionTimeRemaining = quizPerQuestionTimer;
+    } else {
+      quizTimeRemaining = parseInt(timerValue || 300);
+    }
+  }
+
   // Route to quiz page
   window.location.hash = '#quiz';
   renderQuestion(0);
@@ -900,16 +1056,31 @@ function setupQuizSession(quiz, allQuestions, diff, count, mode) {
   if (mode === 'timed') {
     timerBox.classList.remove('hidden');
     timerBox.classList.add('flex');
-    quizTimeRemaining = filtered.length * 60; // 1 min per question
     updateTimerText();
     
     clearInterval(quizTimer);
     quizTimer = setInterval(() => {
-      quizTimeRemaining--;
-      updateTimerText();
-      if (quizTimeRemaining <= 0) {
-        clearInterval(quizTimer);
-        submitQuizAnswers();
+      if (quizTimerType === 'question') {
+        quizQuestionTimeRemaining--;
+        updateTimerText();
+        if (quizQuestionTimeRemaining <= 0) {
+          // Time expired for this question
+          if (currentQuestionIndex < currentQuestions.length - 1) {
+            showToast('Time Expired', 'Moving to the next question.', '⏱️');
+            renderQuestion(currentQuestionIndex + 1);
+          } else {
+            showToast('Time Expired', 'Quiz completed.', '⏱️');
+            clearInterval(quizTimer);
+            submitQuizAnswers();
+          }
+        }
+      } else {
+        quizTimeRemaining--;
+        updateTimerText();
+        if (quizTimeRemaining <= 0) {
+          clearInterval(quizTimer);
+          submitQuizAnswers();
+        }
       }
     }, 1000);
   } else {
@@ -919,9 +1090,13 @@ function setupQuizSession(quiz, allQuestions, diff, count, mode) {
 }
 
 function updateTimerText() {
-  const m = Math.floor(quizTimeRemaining / 60);
-  const s = quizTimeRemaining % 60;
-  document.getElementById('quiz-timer-text').innerText = `${m}:${s.toString().padStart(2, '0')}`;
+  if (quizTimerType === 'question') {
+    document.getElementById('quiz-timer-text').innerText = `${quizQuestionTimeRemaining}s`;
+  } else {
+    const m = Math.floor(quizTimeRemaining / 60);
+    const s = quizTimeRemaining % 60;
+    document.getElementById('quiz-timer-text').innerText = `${m}:${s.toString().padStart(2, '0')}`;
+  }
 }
 
 // Render active gameplay question
@@ -929,6 +1104,12 @@ let currentQuestionIndex = 0;
 function renderQuestion(idx) {
   currentQuestionIndex = idx;
   const q = currentQuestions[idx];
+  
+  // If per-question timer is active, reset time remaining for this question
+  if (quizTimerType === 'question' && quizPerQuestionTimer > 0) {
+    quizQuestionTimeRemaining = quizPerQuestionTimer;
+    updateTimerText();
+  }
   
   // Progress Bar
   const progPct = ((idx + 1) / currentQuestions.length) * 100;
@@ -1032,21 +1213,37 @@ document.getElementById('quiz-abort-btn').onclick = () => {
 async function submitQuizAnswers() {
   clearInterval(quizTimer);
   let correctCount = 0;
+  let incorrectCount = 0;
+  let unansweredCount = 0;
   const detailedReviews = [];
 
   currentQuestions.forEach((q, idx) => {
     const selected = quizAnswers[idx];
     const isCorrect = selected === q.correct_option;
-    if (isCorrect) correctCount++;
+    
+    let isUnanswered = false;
+    if (selected === null || selected === undefined || selected === 'None') {
+      isUnanswered = true;
+      unansweredCount++;
+    } else if (isCorrect) {
+      correctCount++;
+    } else {
+      incorrectCount++;
+    }
 
     detailedReviews.push({
       question: q.question,
       options: { A: q.option_a, B: q.option_b, C: q.option_c, D: q.option_d },
       correct: q.correct_option,
       selected: selected || 'None',
-      isCorrect
+      isCorrect,
+      isUnanswered
     });
   });
+
+  const penalty = quizNegativeMarking || 0;
+  const rawScore = correctCount * 1.0;
+  const netScore = Math.max(0, rawScore - (incorrectCount * penalty));
 
   const accuracy = Math.round((correctCount / currentQuestions.length) * 100);
   const timeTaken = 300; // Simulated time spent
@@ -1054,7 +1251,13 @@ async function submitQuizAnswers() {
   const coinsEarned = correctCount * 2;
 
   // Render results
-  document.getElementById('res-score').innerText = `${correctCount}/${currentQuestions.length}`;
+  if (penalty > 0) {
+    document.getElementById('res-score').innerText = `${netScore.toFixed(2)}/${currentQuestions.length}`;
+    document.getElementById('res-score-detail').innerText = `Correct: ${correctCount} | Wrong: ${incorrectCount} (-${(incorrectCount * penalty).toFixed(2)}) | Left: ${unansweredCount}`;
+  } else {
+    document.getElementById('res-score').innerText = `${correctCount}/${currentQuestions.length}`;
+    document.getElementById('res-score-detail').innerText = `Correct: ${correctCount} | Wrong: ${incorrectCount} | Left: ${unansweredCount}`;
+  }
   document.getElementById('res-accuracy').innerText = `${accuracy}%`;
   document.getElementById('res-time').innerText = `${timeTaken}s`;
   document.getElementById('res-xp').innerText = `+${xpEarned} XP`;
@@ -1068,12 +1271,12 @@ async function submitQuizAnswers() {
     div.innerHTML = `
       <div class="flex items-center gap-2 mb-2">
         <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs ${
-          rev.isCorrect ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-200'
+          rev.isCorrect ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : (rev.isUnanswered ? 'bg-slate-100 text-slate-500 border border-slate-200' : 'bg-red-50 text-red-600 border border-red-200')
         }">${idx + 1}</span>
         <h4 class="font-bold text-sm text-slate-800">${rev.question}</h4>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs pl-7">
-        <div class="p-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-600">Your Answer: <span class="font-bold ${rev.isCorrect ? 'text-emerald-600' : 'text-red-600'}">${rev.selected}</span></div>
+        <div class="p-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-600">Your Answer: <span class="font-bold ${rev.isCorrect ? 'text-emerald-600' : (rev.isUnanswered ? 'text-slate-500' : 'text-red-600')}">${rev.selected}</span></div>
         <div class="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700">Correct Answer: <span class="font-bold">${rev.correct}</span></div>
       </div>
     `;
