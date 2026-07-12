@@ -270,20 +270,62 @@ function getChaptersForSubject(classLabel, subject) {
 /* ─── 7. InsForge DB Calls ────────────────────────────────────── */
 async function fetchQuestionsFromDB(classLabel, subject, chapter) {
   try {
-    const url = new URL(`${DB_CONFIG.baseUrl}/tables/questions/records`);
-    url.searchParams.set('filter[class][eq]', classLabel);
-    url.searchParams.set('filter[subject][eq]', subject);
-    url.searchParams.set('filter[chapter][eq]', chapter);
-    url.searchParams.set('limit', '500');
+    const headers = {
+      'apikey': DB_CONFIG.apiKey,
+      'Authorization': `Bearer ${DB_CONFIG.apiKey}`,
+      'Content-Type': 'application/json'
+    };
 
-    const res = await fetch(url.toString(), {
-      headers: { 'x-api-key': DB_CONFIG.apiKey, 'Content-Type': 'application/json' }
-    });
-    if (!res.ok) throw new Error(`DB error ${res.status}`);
-    const data = await res.json();
-    return data.records || data.list || data || [];
+    const cleanSubject = subject.trim();
+    const cleanClass = classLabel.trim();
+
+    // 1. Fetch subject matching name
+    let subjectId = null;
+    const subjectQuery = `${cleanSubject} (${cleanClass})`;
+    let resSub = await fetch(`${DB_CONFIG.baseUrl}/api/database/records/subjects?name=eq.${encodeURIComponent(subjectQuery)}`, { headers });
+    let subjects = await resSub.json();
+    
+    if (!subjects || !subjects.length) {
+      // Fallback: try just the subject name (for Class 12 which does not have class suffix)
+      resSub = await fetch(`${DB_CONFIG.baseUrl}/api/database/records/subjects?name=eq.${encodeURIComponent(cleanSubject)}`, { headers });
+      subjects = await resSub.json();
+    }
+    
+    if (!subjects || !subjects.length) {
+      throw new Error(`Subject "${cleanSubject}" not found in database.`);
+    }
+    subjectId = subjects[0].id;
+
+    // 2. Fetch chapter matching name
+    const resChap = await fetch(`${DB_CONFIG.baseUrl}/api/database/records/chapters?subject_id=eq.${subjectId}&name=eq.${encodeURIComponent(chapter.trim())}`, { headers });
+    const chapters = await resChap.json();
+    if (!chapters || !chapters.length) {
+      throw new Error(`Chapter "${chapter}" not found in database for subject.`);
+    }
+    const chapterId = chapters[0].id;
+
+    // 3. Fetch quizzes for this chapter
+    const resQuizzes = await fetch(`${DB_CONFIG.baseUrl}/api/database/records/quizzes?chapter_id=eq.${chapterId}`, { headers });
+    const quizzes = await resQuizzes.json();
+    if (!quizzes || !quizzes.length) {
+      throw new Error(`No quizzes found for chapter "${chapter}".`);
+    }
+
+    // 4. Fetch all questions for all quizzes of this chapter
+    let allQuestions = [];
+    for (const quiz of quizzes) {
+      const resQs = await fetch(`${DB_CONFIG.baseUrl}/api/database/records/questions?quiz_id=eq.${quiz.id}&limit=500`, { headers });
+      const qs = await resQs.json();
+      if (Array.isArray(qs)) {
+        allQuestions = allQuestions.concat(qs);
+      }
+    }
+    
+    console.log(`Successfully fetched ${allQuestions.length} questions from DB for ${classLabel} > ${subject} > ${chapter}`);
+    return allQuestions;
+
   } catch (err) {
-    console.warn('InsForge fetch failed, using cached data:', err.message);
+    console.warn('InsForge fetch failed, using cached/fallback data:', err.message);
     return getCachedQuestions(classLabel, subject, chapter);
   }
 }
@@ -606,7 +648,7 @@ function openConfigSheet(chapter, subjectIcon = '📚') {
     const avail = qs.length;
     const el = document.getElementById('cfg-avail');
     if (el) el.textContent = `${avail} questions available`;
-    document.getElementById('cfg-q-count').max = avail || 100;
+    document.getElementById('cfg-q-count').max = avail || 200;
 
     // Update "All" pill
     document.querySelectorAll('.stepper-pill[data-n="all"]').forEach(p => {
@@ -1795,7 +1837,7 @@ function initSwipeGestures() {
 function validateQCount() {
   const inp  = document.getElementById('cfg-q-count');
   const warn = document.getElementById('cfg-q-warn');
-  const avail = state.allQuestions.length || 100;
+  const avail = state.allQuestions.length || 200;
   const val  = parseInt(inp.value);
   if (val > avail && warn) warn.classList.remove('hidden');
   else if (warn)            warn.classList.add('hidden');
