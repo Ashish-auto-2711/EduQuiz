@@ -35,7 +35,7 @@
 
     <!-- Difficulty / Level selector -->
     <div class="cfg-section">
-      <label class="cfg-label">Difficulty Level</label>
+      <label class="cfg-label">Difficulty Level <span style="font-size:0.75rem;font-weight:400;color:var(--text-secondary);">(Choose multiple)</span></label>
       <div class="seg-group" id="cfg-level-group" role="group" aria-label="Difficulty level">
         <button class="seg-btn active" data-level="mixed">Mixed</button>
         <button class="seg-btn" data-level="easy">Easy</button>
@@ -375,6 +375,7 @@
         <div class="qc-meta">
           <span class="diff-badge" id="q-diff-badge">Easy</span>
           <span class="q-type-badge" id="q-type-badge">MCQ</span>
+          <span class="q-marks-badge">+1 Mark</span>
         </div>
         <p class="q-text" id="q-text">Question text loads here…</p>
         <div class="options-stack" id="options-stack" role="group" aria-label="Answer options"></div>
@@ -390,6 +391,10 @@
       <button class="qnav-btn flag-btn" id="btn-q-flag" aria-label="Flag for review">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z"/></svg>
         Flag
+      </button>
+      <button class="qnav-btn abort-btn" id="btn-q-abort" aria-label="Abort quiz">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        Abort
       </button>
       <button class="qnav-btn next-btn" id="btn-q-next" aria-label="Next question">
         Next

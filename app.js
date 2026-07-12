@@ -660,10 +660,23 @@ function openConfigSheet(chapter, subjectIcon = '📚') {
 }
 
 function setConfigLevel(level) {
-  document.querySelectorAll('#cfg-level-group .seg-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.level === level);
-  });
-  state.quizConfig.level = level;
+  const mixedBtn = document.querySelector('#cfg-level-group .seg-btn[data-level="mixed"]');
+  const targetBtn = document.querySelector(`#cfg-level-group .seg-btn[data-level="${level}"]`);
+  
+  if (level === 'mixed') {
+    document.querySelectorAll('#cfg-level-group .seg-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.level === 'mixed');
+    });
+  } else {
+    if (targetBtn) targetBtn.classList.toggle('active');
+    if (mixedBtn) mixedBtn.classList.remove('active');
+    
+    // Check if any other specific level is active
+    const activeSpecifics = [...document.querySelectorAll('#cfg-level-group .seg-btn:not([data-level="mixed"])')].filter(b => b.classList.contains('active'));
+    if (activeSpecifics.length === 0) {
+      if (mixedBtn) mixedBtn.classList.add('active');
+    }
+  }
 }
 
 function setConfigMode(mode) {
@@ -694,7 +707,10 @@ async function launchQuiz() {
   const cfg = state.quizConfig;
 
   // Collect config from UI
-  cfg.level         = document.querySelector('#cfg-level-group .seg-btn.active')?.dataset.level || 'mixed';
+  const activeLevelButtons = [...document.querySelectorAll('#cfg-level-group .seg-btn.active')];
+  const levelsSelected = activeLevelButtons.map(btn => btn.dataset.level);
+  
+  cfg.level         = levelsSelected.join(',');
   cfg.questionCount = parseInt(document.getElementById('cfg-q-count').value) || 10;
   cfg.mode          = document.querySelector('.time-mode-card.active')?.dataset.mode || 'practice';
   cfg.timerMinutes  = parseFloat(document.getElementById('cfg-timer-min')?.value) || 10;
@@ -1741,6 +1757,13 @@ function bindEvents() {
   document.getElementById('btn-q-submit')?.addEventListener('click', openSubmitSheet);
   document.getElementById('btn-quiz-back')?.addEventListener('click', () => {
     if (confirm('Exit quiz? Progress will be saved.')) { saveInProgress(); showScreen('home'); }
+  });
+  document.getElementById('btn-q-abort')?.addEventListener('click', () => {
+    if (confirm('Are you sure you want to abort the quiz? Your current attempt and score will be discarded.')) {
+      clearInterval(state.timerInterval);
+      showScreen('home');
+      showToast('Quiz aborted.', 'info');
+    }
   });
 
   // Submit sheet
