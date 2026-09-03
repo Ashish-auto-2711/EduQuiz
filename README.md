@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EduQuiz
 
-## Getting Started
+A browser-based quiz platform for structured practice across school subjects and chapters, with a growing question bank for Classes 9–12.
 
-First, run the development server:
+## Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+EduQuiz organizes chapter-wise questions into an accessible learning experience. The repository includes quiz data, database schemas, import utilities, answer-repair tools, and a lightweight frontend suitable for static hosting with an external data service.
+
+## Highlights
+
+| Capability | Description |
+| --- | --- |
+| Practice experience | Chapter-focused quizzes for school-level subjects |
+| Question bank | CSV-based question collections maintained in bulk |
+| Data utilities | Seed, repair, clear, and import scripts |
+| Deployment | Static frontend configuration with Netlify support |
+| Frontend | Plain HTML, CSS, and JavaScript |
+
+## Project structure
+
+```text
+index.html                  Application entry point
+styles.css                  Global styling
+app.js                      Client-side application logic
+quiz/                       Chapter-wise CSV question banks
+schema.sql                  Database schema
+database_fixes.sql          Data repair SQL
+import_all_quizzes.js       Bulk question importer
+seed_*.js                   Dataset seeding utilities
+repair_shuffle_answers.js   Answer-order repair utility
+netlify.toml                Netlify deployment configuration
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Install Node.js 18 or newer, then install the project dependency:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npx serve .
+```
 
-## Learn More
+## Data scripts
 
-To learn more about Next.js, take a look at the following resources:
+Before running data scripts, verify the target database and environment variables. These commands can modify or delete data and should not be pointed at production without a backup.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run seed
+npm run clear-db
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The CSV files are the maintainable source for bulk quiz content. Validate headers, answer indexes, chapter names, and duplicate questions before importing them.
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The repository includes Netlify configuration. Configure external database or service credentials through the hosting provider's environment settings. Never commit `.env` files, API keys, service-role keys, or database passwords.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Content contribution
+
+New questions should be factually checked, mapped to the correct subject and chapter, and reviewed for duplicate wording. Keep CSV formatting consistent and test a representative import before submitting changes.
+
+## License
+
+This project currently has no explicit open-source license. Add a license before accepting external contributions or redistributing the code.
